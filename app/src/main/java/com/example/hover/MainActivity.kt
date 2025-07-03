@@ -14,6 +14,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.BlendMode.Companion.Color
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
@@ -23,6 +25,7 @@ import com.mapbox.geojson.Point
 import com.mapbox.maps.extension.compose.MapboxMap
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
 import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
+import com.mapbox.maps.extension.compose.annotation.generated.PolylineAnnotation
 import com.mapbox.maps.extension.compose.annotation.rememberIconImage
 import com.mapbox.maps.extension.compose.style.MapStyle
 import com.mapbox.maps.logD
@@ -81,9 +84,28 @@ fun MapScreen(){
                 false
             },
         ){
+
+            // 1. 绘制连接所有点的折线
+            if (markers.size >= 2) {
+                PolylineAnnotation(
+                    points = markers,
+                ){
+                    lineColor = Color(0xffee4e8b)
+                    lineWidth = 5.0
+                }
+            }
+
             markers.forEachIndexed { index, point ->
                 key(index) {
-                    AddMarker(point = point)
+                    AddMarker(
+                        point = markerStates[index] ?: point,
+                        onPointUpdated = { newPoint ->
+                            // 更新点位置
+                            markerStates[index] = newPoint
+                            // 更新主列表（触发折线重绘）
+                            markers[index] = newPoint
+                        }
+                    )
                 }
             }
         }
@@ -91,7 +113,7 @@ fun MapScreen(){
 }
 
 @Composable
-fun AddMarker(point: Point) {
+fun AddMarker(point: Point, onPointUpdated: (Point) -> Unit) {
     val marker = rememberIconImage(
         key = R.drawable.ic_blue_marker,
         painter = painterResource(R.drawable.ic_blue_marker)
@@ -99,12 +121,13 @@ fun AddMarker(point: Point) {
 
     PointAnnotation(point = point) {
         iconImage = marker
-//        textField = "标记位置"
-        interactionsState.onClicked {
-            println("标记被点击: $point")
+        textField = "标记位置"
+
+        interactionsState.onDragged { event ->
+            // 更新点位置
+            val newPoint = Point.fromLngLat(event.point.longitude(), event.point.latitude())
+            onPointUpdated(newPoint)
             true
-        }.onDragged {
-            println("标记被拖动: $point")
-        }.also { it.isDraggable = true }
+        }
     }
 }
