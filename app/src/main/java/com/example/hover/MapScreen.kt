@@ -1,11 +1,12 @@
 package com.example.hover
 
-import android.R.attr.onClick
 import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,27 +23,39 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.*
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mapbox.geojson.Point
 import com.mapbox.maps.extension.compose.MapboxMap
@@ -51,21 +64,17 @@ import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
 import com.mapbox.maps.extension.compose.annotation.generated.PolylineAnnotation
 import com.mapbox.maps.extension.compose.annotation.rememberIconImage
 import com.mapbox.maps.extension.compose.style.MapStyle
-import com.mapbox.maps.logD
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
-import kotlin.collections.set
-
 
 
 @Composable
-fun MapScreen(onLogout: () -> Unit,  viewModel: MapViewModel = viewModel()) {
+fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
     val configuration = LocalConfiguration.current
     configuration.screenWidthDp
     configuration.screenHeightDp
     val markers = remember { mutableStateListOf<Point>() }
     // 存储每个标记点的状态（用于拖动更新）
     val markerStates = remember { mutableStateMapOf<Int, Point>() }
-    // 控制抽屉状态的变量
     // 动画效果
     val drawerOffset by animateDpAsState(
         targetValue = if (viewModel.isDrawerOpen) 0.dp else -300.dp,
@@ -75,7 +84,7 @@ fun MapScreen(onLogout: () -> Unit,  viewModel: MapViewModel = viewModel()) {
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
-        MapboxMapContent(markers,markerStates)
+        MapboxMapContent(markers, markerStates)
         // 在顶部添加自定义内容
         TopToolbar(
             onLogout = onLogout,
@@ -86,16 +95,25 @@ fun MapScreen(onLogout: () -> Unit,  viewModel: MapViewModel = viewModel()) {
             markerCount = markers.size,
             onSettingsClick = { viewModel.setIsDrawerOpen(true) }
         )
-        Box(modifier = Modifier
-            .width(300.dp)
-            .offset(x = -drawerOffset) // 从右侧滑入
-            .padding(top = 40.dp)
-            .align(Alignment.TopEnd),
+        if (viewModel.isDrawerOpen) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.1f))
+                    .clickable { viewModel.setIsDrawerOpen(false) }
+            )
+        }
+
+        Box(
+            modifier = Modifier
+                .width(300.dp)
+                .offset(x = -drawerOffset) // 从右侧滑入
+                .padding(top = 40.dp)
+                .align(Alignment.TopEnd),
             // 右边
             contentAlignment = Alignment.CenterEnd,
-            ){
+        ) {
             SettingsDrawerContent(
-                onClose = { viewModel.setIsDrawerOpen(false)},
 
             )
 
@@ -105,24 +123,28 @@ fun MapScreen(onLogout: () -> Unit,  viewModel: MapViewModel = viewModel()) {
 
 }
 
-class MapViewModel : androidx.lifecycle.ViewModel() {
-    var username by mutableStateOf("21121")
+class MapViewModel : ViewModel() {
+    var shipSpeed by mutableStateOf("21121")
     var password by mutableStateOf("")
-    var isDrawerOpen by mutableStateOf(false)
+
+    // 控制抽屉状态的变量
+    var isDrawerOpen by mutableStateOf(true)
 
     fun setIsDrawerOpen(isOpen: Boolean) {
         isDrawerOpen = isOpen
     }
 
-    fun isValidCredentials(): Boolean {
-        // 这里添加实际的验证逻辑
-        return username.isNotBlank() && password.length >= 6
-    }
+
 }
 
 @Composable
-fun MapboxMapContent(markers: MutableList<Point>,markerStates: MutableMap<Int, Point>) {
+fun MapboxMapContent(
+    markers: MutableList<Point>,
+    markerStates: MutableMap<Int, Point>,
+    viewModel: MapViewModel = viewModel()
+) {
     val context = LocalContext.current
+
     MapboxMap(
         modifier = Modifier.fillMaxSize(),
         mapViewportState = rememberMapViewportState {
@@ -141,11 +163,12 @@ fun MapboxMapContent(markers: MutableList<Point>,markerStates: MutableMap<Int, P
         style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
         onMapClickListener = { clickedPoint ->
             println("onMapClick: $clickedPoint")
-
+            println("isDrawerOpen: ${viewModel.isDrawerOpen}")
             markers.add(clickedPoint)
-            // 初始化标记状态
             markerStates[markers.lastIndex] = clickedPoint
             println("添加标记在: $clickedPoint")
+
+
             false
         },
 
@@ -181,6 +204,7 @@ fun MapboxMapContent(markers: MutableList<Point>,markerStates: MutableMap<Int, P
         }
     }
 }
+
 // 顶部工具栏组件
 @Composable
 fun TopToolbar(
@@ -189,9 +213,11 @@ fun TopToolbar(
     markerCount: Int,
     onSettingsClick: () -> Unit
 ) {
-    Box( modifier = Modifier
-        .fillMaxWidth()
-        .height(40.dp)){
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(40.dp)
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -222,18 +248,19 @@ fun TopToolbar(
             )
 
             // 右侧：操作按钮
-                IconButton(
-                    modifier = Modifier
-                        .size(80.dp),
-                    onClick = onSettingsClick)
-                {
-                    Icon(
-                        painter = painterResource(R.drawable.settings_24px),
-                        contentDescription = "设置",
-                        tint = Color.White, // 使用 tint 参数设置图标颜色
-                        modifier = Modifier.size(80.dp)
-                    )
-                }
+            IconButton(
+                modifier = Modifier
+                    .size(80.dp),
+                onClick = onSettingsClick
+            )
+            {
+                Icon(
+                    painter = painterResource(R.drawable.settings_24px),
+                    contentDescription = "设置",
+                    tint = Color.White, // 使用 tint 参数设置图标颜色
+                    modifier = Modifier.size(80.dp)
+                )
+            }
         }
     }
 
@@ -242,7 +269,6 @@ fun TopToolbar(
 // 设置抽屉内容
 @Composable
 fun SettingsDrawerContent(
-    onClose: () -> Unit
 ) {
     // 添加垂直滚动支持
     val scrollState = rememberScrollState()
@@ -252,15 +278,14 @@ fun SettingsDrawerContent(
             .fillMaxHeight()
             .width(300.dp)
             .background(MaterialTheme.colorScheme.surface)
-    ){
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxHeight()
                 .width(50.dp)
                 .verticalScroll(scrollState)
                 .background(Color(0x88040408)) // 添加背景色
-                .clickable(enabled = true) {} // 消费点击事件
-            ,
+                .clickable(enabled = true) {}, // 消费点击事件
         ) {
             val menuItems = listOf("船速", "安全", "地图", "通用", "关于")
             val selectedItem = remember { mutableStateOf(4) } // 假设 "关于" 是选中的
@@ -270,7 +295,8 @@ fun SettingsDrawerContent(
                     SettingCategoryItem(
                         title = item,
                         isSelected = index == selectedItem.value,
-                        onClick = { selectedItem.value = index
+                        onClick = {
+                            selectedItem.value = index
                             selectedSetting = item
                         }
                     )
@@ -279,28 +305,25 @@ fun SettingsDrawerContent(
 
 
         }
-        // 分隔线
-        Divider(
-            modifier = Modifier
-                .fillMaxHeight()
-                .width(1.dp)
-                .padding(vertical = 8.dp),
-            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
-        )
+
         // 右侧：具体设置内容
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .padding(start = 16.dp)
+                .background(
+                    Color.Black.copy(alpha = 0.80f)
+                )
                 .verticalScroll(rememberScrollState())
         ) {
 
             // 根据选中的设置项显示不同的内容
             when (selectedSetting) {
-                "船速" -> MapTypeSettings()
+                "船速" -> ShipSpeed(
+                    onConfirm = { /* 确认船速 */ }
+                )
                 "安全" -> LayerControlSettings()
-//                "地图" -> NotificationSettings()
+//                "地图" -> MapTypeSettings()
 //                "通用" -> PrivacySettings()
 //                "关于" -> AccountSettings()
 //                "关于应用" -> AboutAppSettings()
@@ -309,6 +332,99 @@ fun SettingsDrawerContent(
         }
     }
 
+}
+@Composable
+fun CustomTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: @Composable () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier
+            .border(1.dp, Color.White, RoundedCornerShape(4.dp))
+            .padding(4.dp),
+        decorationBox = { innerTextField ->
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                if (value.isEmpty()) {
+                    placeholder()
+                }
+                innerTextField()
+            }
+        }
+    )
+}
+
+@Composable
+fun ShipSpeed(
+    onConfirm: () -> Unit,
+    viewModel: MapViewModel = viewModel()
+) {
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFF040404))
+            .padding(8.dp)
+            .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
+                // 点击屏幕任何地方时清除焦点并隐藏键盘
+                focusManager.clearFocus()
+                keyboardController?.hide()
+            },
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+
+    ) {
+        Text(
+            text = "自动速度",
+            color = Color.White,
+            fontWeight = FontWeight.Normal
+        )
+
+        CustomTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = {
+                Text(
+                    text = "自动船速",
+                    color = Color.White,
+                    fontWeight = FontWeight.Normal
+                )
+            },
+            modifier = Modifier
+                .width(80.dp)
+                .height(30.dp)
+        )
+
+
+        Text(
+            text = "m/s",
+            color = Color.White,
+            fontWeight = FontWeight.Normal
+        )
+
+        Button(
+            onClick = { onConfirm() },
+            modifier = Modifier
+                .width(80.dp)
+                .height(40.dp),
+            contentPadding = PaddingValues(0.dp),
+//            colors = ButtonDefaults.buttonColors(
+//                backgroundColor = Color(0xFF0066CC)
+//            )
+        ) {
+            Text(
+                text = "确定",
+                color = Color.White,
+                fontWeight = FontWeight.Normal
+            )
+        }
+    }
 }
 
 
@@ -352,8 +468,8 @@ fun SettingCategoryItem(
             .fillMaxWidth()
             .height(56.dp)
             .clickable { onClick() },
-                verticalAlignment = Alignment.CenterVertically, // 显式设置垂直居中
-                        horizontalArrangement = Arrangement.Center // 水平居中
+        verticalAlignment = Alignment.CenterVertically, // 显式设置垂直居中
+        horizontalArrangement = Arrangement.Center // 水平居中
     ) {
         Box(
             modifier = Modifier
@@ -364,15 +480,15 @@ fun SettingCategoryItem(
                 )
                 .align(Alignment.CenterVertically) // 确保指示条垂直居中
         )
-            Text(
-                text = title,
-                modifier = Modifier
-                    .weight(1f)
-                    .align(Alignment.CenterVertically)
-                    .padding(start = 8.dp),
-                color = if (isSelected) Color(0xFF0066CC) else Color.Black,
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-            )
+        Text(
+            text = title,
+            modifier = Modifier
+                .weight(1f)
+                .align(Alignment.CenterVertically)
+                .padding(start = 8.dp),
+            color = if (isSelected) Color(0xFF0066CC) else Color.White,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+        )
 
     }
 }
@@ -383,7 +499,7 @@ fun MapTypeSettings() {
         Text(
             text = "选择地图显示样式",
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = Color.White
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -415,7 +531,7 @@ fun MapTypeOption(name: String, isSelected: Boolean) {
         Text(
             text = name,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
+            color = Color.White
         )
     }
 }
