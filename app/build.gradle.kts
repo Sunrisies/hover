@@ -20,8 +20,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = true
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -52,7 +51,7 @@ android {
 }
 
 dependencies {
-
+    val nav_version = "2.9.1"
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -63,6 +62,9 @@ dependencies {
     implementation(libs.androidx.material3)
     implementation("com.mapbox.maps:android:11.13.1")
     implementation("com.mapbox.extension:maps-compose:11.13.1")
+    implementation("androidx.navigation:navigation-compose:${nav_version}")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
