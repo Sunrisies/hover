@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.TileMode
@@ -39,7 +41,9 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mapbox.geojson.Point
 import com.mapbox.maps.extension.compose.MapboxMap
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
@@ -54,20 +58,17 @@ import kotlin.collections.set
 
 
 @Composable
-fun MapScreen(onLogout: () -> Unit) {
+fun MapScreen(onLogout: () -> Unit,  viewModel: MapViewModel = viewModel()) {
     val configuration = LocalConfiguration.current
-    val context = LocalContext.current
     configuration.screenWidthDp
     configuration.screenHeightDp
     val markers = remember { mutableStateListOf<Point>() }
     // 存储每个标记点的状态（用于拖动更新）
     val markerStates = remember { mutableStateMapOf<Int, Point>() }
     // 控制抽屉状态的变量
-    var isDrawerOpen by remember { mutableStateOf(false) }
-    var drawerState  = rememberDrawerState(initialValue = DrawerValue.Open)
     // 动画效果
     val drawerOffset by animateDpAsState(
-        targetValue = if (isDrawerOpen) 0.dp else -300.dp,
+        targetValue = if (viewModel.isDrawerOpen) 0.dp else -300.dp,
         animationSpec = tween(durationMillis = 300),
         label = "drawerAnimation"
     )
@@ -83,36 +84,41 @@ fun MapScreen(onLogout: () -> Unit) {
                 markerStates.clear()
             },
             markerCount = markers.size,
-            onSettingsClick = { isDrawerOpen = true }
+            onSettingsClick = { viewModel.setIsDrawerOpen(true) }
         )
-        Box(modifier = Modifier.width(300.dp)
+        Box(modifier = Modifier
+            .width(300.dp)
             .offset(x = -drawerOffset) // 从右侧滑入
-            .padding(top=40.dp)
-            .background(Color.White).align(Alignment.TopEnd),
+            .padding(top = 40.dp)
+            .align(Alignment.TopEnd),
             // 右边
             contentAlignment = Alignment.CenterEnd,
             ){
             SettingsDrawerContent(
-                onClose = { isDrawerOpen = false },
+                onClose = { viewModel.setIsDrawerOpen(false)},
 
             )
 
         }
 
     }
-    // 控制抽屉打开/关闭
-    LaunchedEffect(isDrawerOpen) {
-        println("isDrawerOpen: $isDrawerOpen")
-        if (isDrawerOpen) {
-            drawerState.open()
-        } else {
-            drawerState.close()
-        }
-    }
 
 }
 
+class MapViewModel : androidx.lifecycle.ViewModel() {
+    var username by mutableStateOf("21121")
+    var password by mutableStateOf("")
+    var isDrawerOpen by mutableStateOf(false)
 
+    fun setIsDrawerOpen(isOpen: Boolean) {
+        isDrawerOpen = isOpen
+    }
+
+    fun isValidCredentials(): Boolean {
+        // 这里添加实际的验证逻辑
+        return username.isNotBlank() && password.length >= 6
+    }
+}
 
 @Composable
 fun MapboxMapContent(markers: MutableList<Point>,markerStates: MutableMap<Int, Point>) {
@@ -240,143 +246,71 @@ fun SettingsDrawerContent(
 ) {
     // 添加垂直滚动支持
     val scrollState = rememberScrollState()
-    Column(
+    var selectedSetting by remember { mutableStateOf("船速") }
+    Row(
         modifier = Modifier
             .fillMaxHeight()
             .width(300.dp)
-            .verticalScroll(scrollState)
-            .background(MaterialTheme.colorScheme.surface) // 添加背景色
-            .padding(16.dp)
-            .clickable(enabled = true) {} // 消费点击事件
-        ,
-    ) {
-        // 标题和关闭按钮
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            .background(MaterialTheme.colorScheme.surface)
+    ){
+        Column(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(50.dp)
+                .verticalScroll(scrollState)
+                .background(Color(0x88040408)) // 添加背景色
+                .clickable(enabled = true) {} // 消费点击事件
+            ,
         ) {
-            Text(
-                text = "设置",
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
-            )
+            val menuItems = listOf("船速", "安全", "地图", "通用", "关于")
+            val selectedItem = remember { mutableStateOf(4) } // 假设 "关于" 是选中的
 
-            IconButton(onClick = onClose) {
-                Icon(
-                    painter = painterResource(R.drawable.close_24px),
-                    contentDescription = "关闭设置",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
+            Column {
+                menuItems.forEachIndexed { index, item ->
+                    SettingCategoryItem(
+                        title = item,
+                        isSelected = index == selectedItem.value,
+                        onClick = { selectedItem.value = index
+                            selectedSetting = item
+                        }
+                    )
+                }
             }
+
+
         }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // 设置选项
-        SettingsOption(
-//            icon = Icons.Default.Map,
-            title = "地图类型",
-            description = "选择地图显示样式"
+        // 分隔线
+        Divider(
+            modifier = Modifier
+                .fillMaxHeight()
+                .width(1.dp)
+                .padding(vertical = 8.dp),
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
         )
-
-        SettingsOption(
-//            icon = Icons.Default.Layers,
-            title = "图层控制",
-            description = "管理地图图层"
-        )
-
-        SettingsOption(
-//            icon = Icons.Default.Notifications,
-            title = "通知设置",
-            description = "管理应用通知"
-        )
-
-        SettingsOption(
-//            icon = Icons.Default.PrivacyTip,
-            title = "隐私设置",
-            description = "管理数据隐私选项"
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        // 底部操作按钮
-        Button(
-            onClick = { /* 保存设置 */ },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
+        // 右侧：具体设置内容
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+                .padding(start = 16.dp)
+                .verticalScroll(rememberScrollState())
         ) {
-            Text("保存设置")
-        }
-        Button(
-            onClick = { /* 保存设置 */ },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("保存设置")
-        }
-        Button(
-            onClick = { /* 保存设置 */ },
-            modifier = Modifier.fillMaxWidth(),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("保存设置")
+
+            // 根据选中的设置项显示不同的内容
+            when (selectedSetting) {
+                "船速" -> MapTypeSettings()
+                "安全" -> LayerControlSettings()
+//                "地图" -> NotificationSettings()
+//                "通用" -> PrivacySettings()
+//                "关于" -> AccountSettings()
+//                "关于应用" -> AboutAppSettings()
+            }
+
         }
     }
+
 }
 
-// 设置项组件
-@Composable
-fun SettingsOption(
-//    icon: ImageVector,
-    title: String,
-    description: String
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-//        Icon(
-//            imageVector = icon,
-//            contentDescription = null,
-//            tint = MaterialTheme.colorScheme.primary,
-//            modifier = Modifier.size(24.dp)
-//        )
-
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Column {
-            Text(
-                text = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Text(
-                text = description,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-//        Icon(
-//            imageVector = Icons.Default.ArrowForwardIos,
-//            contentDescription = "更多",
-//            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-//            modifier = Modifier.size(16.dp)
-//        )
-    }
-}
 
 
 @Composable
@@ -404,5 +338,125 @@ fun AddMarker(
             .also {
                 it.isDraggable = true
             }
+    }
+}
+
+@Composable
+fun SettingCategoryItem(
+    title: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(56.dp)
+            .clickable { onClick() },
+                verticalAlignment = Alignment.CenterVertically, // 显式设置垂直居中
+                        horizontalArrangement = Arrangement.Center // 水平居中
+    ) {
+        Box(
+            modifier = Modifier
+                .width(3.dp)
+                .fillMaxHeight()
+                .background(
+                    if (isSelected) Color(0xFF0066CC) else Color.Transparent
+                )
+                .align(Alignment.CenterVertically) // 确保指示条垂直居中
+        )
+            Text(
+                text = title,
+                modifier = Modifier
+                    .weight(1f)
+                    .align(Alignment.CenterVertically)
+                    .padding(start = 8.dp),
+                color = if (isSelected) Color(0xFF0066CC) else Color.Black,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+            )
+
+    }
+}
+
+@Composable
+fun MapTypeSettings() {
+    Column {
+        Text(
+            text = "选择地图显示样式",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 船速选项
+        MapTypeOption("标准地图", true)
+        MapTypeOption("卫星地图", false)
+        MapTypeOption("地形地图", false)
+        MapTypeOption("夜间模式", false)
+    }
+}
+
+@Composable
+fun MapTypeOption(name: String, isSelected: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { /* 选择船速 */ },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        RadioButton(
+            selected = isSelected,
+            onClick = { /* 选择船速 */ }
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+    }
+}
+
+@Composable
+fun LayerControlSettings() {
+    Column {
+        Text(
+            text = "管理地图图层",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // 图层选项
+        LayerOption("交通状况", true)
+        LayerOption("兴趣点", true)
+        LayerOption("地形等高线", false)
+        LayerOption("3D建筑", false)
+    }
+}
+
+@Composable
+fun LayerOption(name: String, isEnabled: Boolean) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Text(
+            text = name,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        Switch(
+            checked = isEnabled,
+            onCheckedChange = { /* 切换图层状态 */ }
+        )
     }
 }
