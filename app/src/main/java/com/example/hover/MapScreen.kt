@@ -21,11 +21,15 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -45,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalConfiguration
@@ -54,6 +59,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -355,7 +361,10 @@ fun CustomTextField(
                 }
                 innerTextField()
             }
-        }
+        },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            keyboardType = KeyboardType.Text
+        )
     )
 }
 
@@ -407,26 +416,41 @@ fun ShipSpeed(
             color = Color.White,
             fontWeight = FontWeight.Normal
         )
-
-        Button(
-            onClick = { onConfirm() },
-            modifier = Modifier
-                .width(80.dp)
-                .height(40.dp),
-            contentPadding = PaddingValues(0.dp),
-//            colors = ButtonDefaults.buttonColors(
-//                backgroundColor = Color(0xFF0066CC)
-//            )
-        ) {
-            Text(
-                text = "确定",
-                color = Color.White,
-                fontWeight = FontWeight.Normal
-            )
-        }
+        CustomButton(text = "确定", onClick = { onConfirm() })
     }
 }
 
+@Composable
+fun CustomButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    shape: Shape = RoundedCornerShape(6.dp),
+    containerColor: Color = Color(0xFF0066CC),
+    contentColor: Color = Color.White,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    innerPadding: PaddingValues = PaddingValues(4.dp)
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier
+            .wrapContentSize()
+            .then(modifier),
+        shape = shape,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = containerColor,
+            contentColor = contentColor
+        ),
+        contentPadding = contentPadding
+    ) {
+        Text(
+            text = text,
+            color = contentColor,
+            fontWeight = FontWeight.Normal,
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
+}
 
 
 @Composable
