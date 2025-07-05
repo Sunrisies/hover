@@ -1,4 +1,4 @@
-package com.example.hover
+package com.hover.app.pages
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -9,14 +9,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.hover.AuthManager
-import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -116,7 +114,7 @@ fun LoginScreen(
 private enum class Field {
     USERNAME, PASSWORD
 }
-class LoginViewModel : androidx.lifecycle.ViewModel() {
+class LoginViewModel : ViewModel() {
     var username by mutableStateOf("")
     var password by mutableStateOf("")
 

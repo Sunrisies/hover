@@ -1,6 +1,8 @@
-package com.example.hover
+package com.hover.app.pages
 
+import android.os.Bundle
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -28,8 +30,11 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +54,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
@@ -56,13 +62,15 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.semantics.Role.Companion.Checkbox
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hover.app.R
 import com.mapbox.geojson.Point
 import com.mapbox.maps.extension.compose.MapboxMap
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
@@ -71,6 +79,19 @@ import com.mapbox.maps.extension.compose.annotation.generated.PolylineAnnotation
 import com.mapbox.maps.extension.compose.annotation.rememberIconImage
 import com.mapbox.maps.extension.compose.style.MapStyle
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
+import com.hover.app.ui.CustomButton
+import com.mapbox.maps.MapboxMap
+import com.mapbox.maps.MapboxDelicateApi
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.compose.MapEffect
+import com.mapbox.maps.extension.style.sources.generated.ImageSource
+import com.mapbox.maps.extension.style.sources.getSourceAs
+
+//class MapScreen1:ComponentActivity{
+//    override fun onCreate(savedInstanceState: Bundle?) {
+//
+//    }
+//}
 
 
 @Composable
@@ -87,6 +108,7 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
         animationSpec = tween(durationMillis = 300),
         label = "drawerAnimation"
     )
+    var mapboxMap: MapboxMap
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -119,10 +141,7 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
             // 右边
             contentAlignment = Alignment.CenterEnd,
         ) {
-            SettingsDrawerContent(
-
-            )
-
+            SettingsDrawerContent()
         }
 
     }
@@ -132,6 +151,8 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
 class MapViewModel : ViewModel() {
     var shipSpeed by mutableStateOf("21121")
     var password by mutableStateOf("")
+    // 地图对象
+
 
     // 控制抽屉状态的变量
     var isDrawerOpen by mutableStateOf(true)
@@ -151,7 +172,7 @@ fun MapboxMapContent(
 ) {
     val context = LocalContext.current
 
-    MapboxMap(
+     MapboxMap(
         modifier = Modifier.fillMaxSize(),
         mapViewportState = rememberMapViewportState {
             setCameraOptions {
@@ -166,7 +187,9 @@ fun MapboxMapContent(
                 alignment = Alignment.BottomStart,
             )
         },
-        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
+         style = { MapStyle(style = Style.STANDARD_SATELLITE)},
+//        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
+//        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
         onMapClickListener = { clickedPoint ->
             println("onMapClick: $clickedPoint")
             println("isDrawerOpen: ${viewModel.isDrawerOpen}")
@@ -179,7 +202,13 @@ fun MapboxMapContent(
         },
 
         ) {
-
+//         @OptIn(MapboxDelicateApi::class)
+         MapEffect(Unit) {
+             val ID_IMAGE_SOURCE = ""
+//             println("MapEffect: ${it.toString}")
+//             val imageSource: ImageSource = it.mapboxMap.getStyle()
+//             imageSource.updateImage(bitmap)
+         }
         // 1. 绘制连接所有点的折线
         if (markers.size >= 2) {
             PolylineAnnotation(
@@ -209,6 +238,7 @@ fun MapboxMapContent(
             }
         }
     }
+
 }
 
 // 顶部工具栏组件
@@ -278,7 +308,9 @@ fun SettingsDrawerContent(
 ) {
     // 添加垂直滚动支持
     val scrollState = rememberScrollState()
-    var selectedSetting by remember { mutableStateOf("船速") }
+    var selectedSetting by remember { mutableStateOf("安全") } // 当前选中的设置项
+    val menuItems = listOf("船速", "安全", "地图", "通用", "关于") // 当前左侧数据列表
+
     Row(
         modifier = Modifier
             .fillMaxHeight()
@@ -293,16 +325,12 @@ fun SettingsDrawerContent(
                 .background(Color(0x88040408)) // 添加背景色
                 .clickable(enabled = true) {}, // 消费点击事件
         ) {
-            val menuItems = listOf("船速", "安全", "地图", "通用", "关于")
-            val selectedItem = remember { mutableStateOf(4) } // 假设 "关于" 是选中的
-
             Column {
                 menuItems.forEachIndexed { index, item ->
                     SettingCategoryItem(
                         title = item,
-                        isSelected = index == selectedItem.value,
+                        isSelected = item == selectedSetting,
                         onClick = {
-                            selectedItem.value = index
                             selectedSetting = item
                         }
                     )
@@ -328,16 +356,112 @@ fun SettingsDrawerContent(
                 "船速" -> ShipSpeed(
                     onConfirm = { /* 确认船速 */ }
                 )
-                "安全" -> LayerControlSettings()
-//                "地图" -> MapTypeSettings()
+                "安全" -> SecureSettings(
+                    onConfirm = { /* 确认安全设置 */ }
+                )
+                "地图" -> MapTypeSettings()
 //                "通用" -> PrivacySettings()
 //                "关于" -> AccountSettings()
-//                "关于应用" -> AboutAppSettings()
             }
 
         }
     }
 
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SecureSettings(onConfirm: () -> Unit){
+    var reminderText by remember { mutableStateOf("") }
+    var actionText by remember { mutableStateOf("无动作") }
+    var expanded by remember { mutableStateOf(false) }
+    val actions = listOf("无动作", "发出警报", "自动返航")
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "低电量提醒",
+            color = Color.White,
+            fontWeight = FontWeight.Normal
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+
+        CustomTextField(
+            value = "",
+            onValueChange = {},
+            placeholder = {
+                Text(
+                    text = "提醒电量",
+                    color = Color.White,
+                    fontWeight = FontWeight.Normal
+                )
+            },
+            modifier = Modifier
+                .width(80.dp)
+                .height(30.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+
+        Text(
+            text = "V",
+            color = Color.White,
+            fontWeight = FontWeight.Normal
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+
+        CustomButton(text = "确定", onClick = { onConfirm() })
+    }
+
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = "低电量动作",
+            color = Color.White,
+            fontWeight = FontWeight.Normal
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
+        // 下拉菜单
+        ExposedDropdownMenuBox(
+            expanded = expanded,
+            onExpandedChange = { expanded = it }
+        ) {
+            TextField(
+                readOnly = true,
+                value = actionText,
+                onValueChange = { },
+                modifier = Modifier
+                    .menuAnchor()
+                    .width(150.dp),
+                trailingIcon = { Text(text = "▼", color = Color.Gray) }
+            )
+            ExposedDropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false }
+            ) {
+                actions.forEach { action ->
+                    DropdownMenuItem(
+                        text = { Text(text = action) },
+                        onClick = {
+                            actionText = action
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
 }
 @Composable
 fun CustomTextField(
@@ -378,9 +502,11 @@ fun ShipSpeed(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(Color(0xFF040404))
+//            .background(Color(0xFF040404))
             .padding(8.dp)
-            .clickable(indication = null, interactionSource = remember { MutableInteractionSource() }) {
+            .clickable(
+                indication = null,
+                interactionSource = remember { MutableInteractionSource() }) {
                 // 点击屏幕任何地方时清除焦点并隐藏键盘
                 focusManager.clearFocus()
                 keyboardController?.hide()
@@ -420,37 +546,7 @@ fun ShipSpeed(
     }
 }
 
-@Composable
-fun CustomButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    shape: Shape = RoundedCornerShape(6.dp),
-    containerColor: Color = Color(0xFF0066CC),
-    contentColor: Color = Color.White,
-    contentPadding: PaddingValues = PaddingValues(0.dp),
-    innerPadding: PaddingValues = PaddingValues(4.dp)
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier
-            .wrapContentSize()
-            .then(modifier),
-        shape = shape,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = containerColor,
-            contentColor = contentColor
-        ),
-        contentPadding = contentPadding
-    ) {
-        Text(
-            text = text,
-            color = contentColor,
-            fontWeight = FontWeight.Normal,
-            modifier = Modifier.padding(innerPadding)
-        )
-    }
-}
+
 
 
 @Composable
@@ -519,7 +615,9 @@ fun SettingCategoryItem(
 
 @Composable
 fun MapTypeSettings() {
-    Column {
+    Column(
+        modifier = Modifier.padding(8.dp)
+    ) {
         Text(
             text = "选择地图显示样式",
             style = MaterialTheme.typography.bodyMedium,
@@ -545,9 +643,17 @@ fun MapTypeOption(name: String, isSelected: Boolean) {
             .clickable { /* 选择船速 */ },
         verticalAlignment = Alignment.CenterVertically
     ) {
-        RadioButton(
-            selected = isSelected,
-            onClick = { /* 选择船速 */ }
+//        RadioButton(
+//            selected = isSelected,
+//            onClick = { /* 选择船速 */ }
+//        )
+        Checkbox(
+            checked = isSatelliteChecked,
+            onCheckedChange = { setIsSatelliteChecked(it) },
+//            colors = androidx.compose.material3 CheckboxDefaults.colors(
+//                    checkedColor = Color(0xFF0066CC),
+//            uncheckedColor = Color.Gray
+        )
         )
 
         Spacer(modifier = Modifier.width(16.dp))

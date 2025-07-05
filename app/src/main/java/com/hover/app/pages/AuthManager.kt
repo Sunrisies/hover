@@ -1,4 +1,4 @@
-package com.example.hover
+package com.hover.app.pages
 
 // AuthManager.kt
 import android.content.Context
