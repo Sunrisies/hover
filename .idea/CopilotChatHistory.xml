@@ -4,6 +4,12 @@
     <option name="conversations">
       <list>
         <Conversation>
+          <option name="createTime" value="1751798753410" />
+          <option name="id" value="0197df57a8827bf5922ce06983e08676" />
+          <option name="title" value="新对话 2025年7月06日 18:45:53" />
+          <option name="updateTime" value="1751798753410" />
+        </Conversation>
+        <Conversation>
           <option name="createTime" value="1751719875816" />
           <option name="id" value="0197daa414e87f14bd54e27611f9675d" />
           <option name="title" value="在kt中关于键盘都有那些事件？为什么在使用讯飞的时候，不是全屏？" />
