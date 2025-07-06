@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,6 +33,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -58,6 +60,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
@@ -470,12 +473,30 @@ fun CustomTextField(
     placeholder: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var focused by remember { mutableStateOf(false) }
+
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val onOutsideClick = {
+        if (focused) {
+            keyboardController?.hide()
+            focused = false
+        }
+    }
+
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier
+        modifier = modifier.fillMaxWidth()
             .border(1.dp, Color.White, RoundedCornerShape(4.dp))
-            .padding(4.dp),
+            .padding(4.dp)
+            .pointerInput(Unit) {
+                detectTapGestures { offset ->
+                    focused = true
+                    println("点击了")
+
+                    keyboardController?.show()
+                }
+            },
         decorationBox = { innerTextField ->
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -487,7 +508,7 @@ fun CustomTextField(
             }
         },
         keyboardOptions = KeyboardOptions.Default.copy(
-            keyboardType = KeyboardType.Text
+            keyboardType = KeyboardType.Number
         )
     )
 }
@@ -634,6 +655,7 @@ fun MapTypeSettings() {
     }
 }
 
+
 @Composable
 fun MapTypeOption(name: String, isSelected: Boolean) {
     Row(
@@ -648,11 +670,11 @@ fun MapTypeOption(name: String, isSelected: Boolean) {
 //            onClick = { /* 选择船速 */ }
 //        )
         Checkbox(
-            checked = isSatelliteChecked,
-            onCheckedChange = { setIsSatelliteChecked(it) },
-//            colors = androidx.compose.material3 CheckboxDefaults.colors(
-//                    checkedColor = Color(0xFF0066CC),
-//            uncheckedColor = Color.Gray
+            checked = isSelected,
+            onCheckedChange = { /* 选择船速 */ },
+            colors = CheckboxDefaults.colors(
+                    checkedColor = Color(0xFF0066CC),
+            uncheckedColor = Color.Gray
         )
         )
 
