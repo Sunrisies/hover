@@ -71,6 +71,7 @@ import androidx.compose.ui.semantics.Role.Companion.Checkbox
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hover.app.R
@@ -144,7 +145,7 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
             // 右边
             contentAlignment = Alignment.CenterEnd,
         ) {
-            SettingsDrawerContent()
+            SettingsDrawerContent(onLogout)
         }
 
     }
@@ -308,6 +309,7 @@ fun TopToolbar(
 // 设置抽屉内容
 @Composable
 fun SettingsDrawerContent(
+    onLogout:() ->Unit,
 ) {
     // 添加垂直滚动支持
     val scrollState = rememberScrollState()
@@ -364,7 +366,7 @@ fun SettingsDrawerContent(
                 )
                 "地图" -> MapTypeSettings()
 //                "通用" -> PrivacySettings()
-//                "关于" -> AccountSettings()
+                "关于" -> AboutSettings(onLogout)
             }
 
         }
@@ -726,5 +728,51 @@ fun LayerOption(name: String, isEnabled: Boolean) {
             checked = isEnabled,
             onCheckedChange = { /* 切换图层状态 */ }
         )
+    }
+}
+
+@Composable
+fun AboutSettings(onLogout: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Check for updates button
+        Button(
+            onClick = { /* Handle check for updates */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Text(text = "检查更新", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Use help button
+        Button(
+            onClick = { /* Handle use help */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Text(text = "使用帮助", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Logout button
+        Button(
+            onClick = { /* Handle logout */ },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp)
+        ) {
+            Text(text = "退出登录", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+        }
+        CustomButton(text = "退出登录", onClick = { onLogout() })
     }
 }

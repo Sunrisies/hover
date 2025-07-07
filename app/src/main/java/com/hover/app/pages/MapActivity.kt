@@ -31,23 +31,7 @@ class MapActivity : ComponentActivity() {
 
         // 创建AuthManager实例
         val authManager = AuthManager(applicationContext)
-//        MapView(
-//            this,
-//            MapInitOptions(
-//                this, cameraOptions = START_CAMERA_POSITION
-//            )
-//        ).also { mapView ->
-//            mapboxMap = mapView.mapboxMap
-//            setContentView(mapView)
-//            mapboxMap.loadStyle(
-//                style(Style.MAPBOX_STREETS) {
-//                    +colorTheme(base64 = BASE64_ENCODED_RED_THEME)
-//                    +atmosphere {
-//                        color(COLOR_GREEN)
-//                    }
-//                }
-//            )
-//        }
+
         setContent {
             val view = LocalView.current
             // 隐藏状态栏和导航栏
