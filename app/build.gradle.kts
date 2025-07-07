@@ -6,22 +6,18 @@ plugins {
 
 android {
     namespace = "com.hover.app"
-    compileSdk = 36
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.hover.app"
-        minSdk = 28
-        targetSdk = 36
+        minSdk = 26
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
-//    sourceSets {
-//        named("main") {
-//            java.srcDirs("src/main/java/com/hover/app") // 指向新路径
-//        }
-//    }
+
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -49,9 +45,9 @@ android {
 //            isUniversalApk = false
 //        }
 //    }
-//    composeOptions {
-//        kotlinCompilerExtensionVersion = "1.3.2"
-//    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.3.2"
+    }
 }
 
 dependencies {

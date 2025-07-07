@@ -1,44 +1,56 @@
 package com.hover.app.pages
 
-import android.content.Intent
-import android.os.Build
-import android.view.WindowManager
+import android.os.Bundle
+import android.view.View
+import android.view.Window
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.annotation.RequiresApi
-import androidx.core.view.WindowCompat
-
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.material3.Tab
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.Dp
 
 class LoginActivity : ComponentActivity() {
-    @RequiresApi(Build.VERSION_CODES.R)
-    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+
+    companion object {
+        const val TAG = "AndroidMqttClient"
+    }
+    override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.setDecorFitsSystemWindows(false)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        window.attributes.apply {
-
-
-
-            // 设置视图内容是否显示到异形切口区域
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // 如果最低版本支持小于28，需要增加判断，防止在低版本系统运行时找不到系统API崩溃
-                layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-                window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-
-        }
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN
+        // 隐藏标题栏
 
         setContent {
-
-            LoginScreen(onLoginSuccess = {
-                startActivity(Intent(this@LoginActivity, MapActivity::class.java))
-                finish() })
+            LoginScreen(
+                onLoginSuccess = {
+                    Toast.makeText(this, "Login Success", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+            )
         }
     }
-
-
 }
-
 
