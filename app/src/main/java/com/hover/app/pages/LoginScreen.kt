@@ -14,16 +14,19 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key.Companion.Window
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 //import androidx.compose.ui.platform.LocalWindowInsets
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
     onLoginSuccess: () -> Unit,
@@ -33,7 +36,6 @@ fun LoginScreen(
     val keyboardController = LocalSoftwareKeyboardController.current
     val usernameFocusRequester = remember { FocusRequester() }
     val passwordFocusRequester = remember { FocusRequester() }
-
     // 用于跟踪哪个输入框有焦点
     var activeField by remember { mutableStateOf<Field?>(null) }
     val density = LocalDensity.current
@@ -68,95 +70,117 @@ fun LoginScreen(
 //            Insets(0.dp, 0.dp, 0.dp, 0.dp)
         }
 //    }
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(start = 51.dp)
-            .background(Color.Red)
-            .clickable {
-                // 点击屏幕任何地方时清除焦点并隐藏键盘
+    val scope = rememberCoroutineScope()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("登录") },
+
+            )
+        },
+        floatingActionButton = {
+            var clickCount by remember { mutableStateOf(0) }
+
+        },
+        contentWindowInsets = ScaffoldDefaults.contentWindowInsets,
+        content = { innerPadding ->
+            Text(
+                text = "Body content",
+                modifier = Modifier.padding(innerPadding).fillMaxSize().wrapContentSize(),
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+//                    .padding(start = 51.dp)
+                    .background(Color.Red)
+                    .clickable {
+                        // 点击屏幕任何地方时清除焦点并隐藏键盘
 //                focusManager.clearFocus()
 //                keyboardController?.hide()
 //                activeField = null
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            modifier = Modifier
-                .widthIn(max = 400.dp)
-                .padding(
-                    start = 32.dp,
-                    end = 32.dp,
-//                    top = topPadding.dp, // 调整顶部边距
-                    bottom = 32.dp
-                ).background(Color.White)
-                .clickable(
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }) {
-                    // 阻止点击表单区域时关闭键盘
-                },
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                text = "地图应用登录1",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.padding(bottom = 24.dp)
-            )
-
-            OutlinedTextField(
-                value = viewModel.username,
-                onValueChange = { viewModel.username = it },
-                label = { Text("用户名") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(usernameFocusRequester)
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            activeField = Field.USERNAME
-                        } else if (activeField == Field.USERNAME) {
-                            activeField = null
-                        }
-                    }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = viewModel.password,
-                onValueChange = { viewModel.password = it },
-                label = { Text("密码") },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(passwordFocusRequester)
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            activeField = Field.PASSWORD
-                        } else if (activeField == Field.PASSWORD) {
-                            activeField = null
-                        }
-                    }
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            Button(
-                onClick = {
-                    // 登录逻辑...
-                    if (viewModel.isValidCredentials()) {
-                        onLoginSuccess()
-                    }
-                    // 登录后清除焦点
-                    focusManager.clearFocus()
-                    keyboardController?.hide()
-                },
-                modifier = Modifier.fillMaxWidth()
+                    },
+                contentAlignment = Alignment.Center
             ) {
-                Text("登录")
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = 400.dp)
+                        .padding(
+                            start = 32.dp,
+                            end = 32.dp,
+//                    top = topPadding.dp, // 调整顶部边距
+                            bottom = 32.dp
+                        ).background(Color.White)
+                        .clickable(
+                            indication = null,
+                            interactionSource = remember { MutableInteractionSource() }) {
+                            // 阻止点击表单区域时关闭键盘
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "地图应用登录",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(bottom = 24.dp)
+                    )
+
+                    OutlinedTextField(
+                        value = viewModel.username,
+                        onValueChange = { viewModel.username = it },
+                        label = { Text("用户名") },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(usernameFocusRequester)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    activeField = Field.USERNAME
+                                } else if (activeField == Field.USERNAME) {
+                                    activeField = null
+                                }
+                            }
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    OutlinedTextField(
+                        value = viewModel.password,
+                        onValueChange = { viewModel.password = it },
+                        label = { Text("密码") },
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(passwordFocusRequester)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused) {
+                                    activeField = Field.PASSWORD
+                                } else if (activeField == Field.PASSWORD) {
+                                    activeField = null
+                                }
+                            }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    Button(
+                        onClick = {
+                            // 登录逻辑...
+                            if (viewModel.isValidCredentials()) {
+                                onLoginSuccess()
+                            }
+                            // 登录后清除焦点
+                            focusManager.clearFocus()
+                            keyboardController?.hide()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("登录")
+                    }
+                }
             }
-        }
-    }
+        },
+    )
+
 }
+
 
 // 用于跟踪当前活动的输入字段
 private enum class Field {

@@ -64,6 +64,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("com.android.support.constraint:constraint-layout:1.1.3")
+
     implementation("com.mapbox.maps:android:11.13.1")
     implementation("com.mapbox.extension:maps-compose:11.13.1")
     implementation("androidx.navigation:navigation-compose:${nav_version}")
