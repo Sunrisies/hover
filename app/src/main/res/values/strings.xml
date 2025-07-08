@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">hover</string>
+    <string name="version_info">1.0.0</string>
 </resources>

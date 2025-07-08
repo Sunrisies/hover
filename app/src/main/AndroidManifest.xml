@@ -20,12 +20,28 @@
         android:theme="@style/Theme.Hover"
         android:usesCleartextTraffic="true"
         >
+        <!-- 启动Activity -->
+        <activity
+            android:name=".pages.SplashActivity"
+            android:exported="true"
+            android:windowAnimationStyle="@style/CustomActivityAnimation"
 
+            android:theme="@style/Theme.Hover"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize"
+            >
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        </activity>
         <activity
             android:name=".pages.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Hover"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize"
     >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -35,6 +51,8 @@
         <activity android:name=".pages.MapActivity"
             android:exported="true"
             android:theme="@style/Theme.Hover"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -45,6 +63,8 @@
         <activity android:name=".pages.LoginActivity"
             android:exported="true"
             android:label="@string/app_name"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|screenSize"
             >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
