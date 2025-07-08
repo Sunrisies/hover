@@ -1,5 +1,6 @@
 package com.hover.app.pages
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -11,8 +12,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Button
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -27,15 +31,27 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hover.app.R
+import com.hover.app.ui.CustomButton
+import com.hover.app.utils.AuthService
+import com.hover.app.utils.login
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ServerResponseException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.serialization.SerializationException
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,19 +65,21 @@ fun LoginScreen(
     val passwordFocusRequester = remember { FocusRequester() }
     // 用于跟踪哪个输入框有焦点
     var activeField by remember { mutableStateOf<Field?>(null) }
-    val density = LocalDensity.current
-    println("screenHeight: $density")
-    val screenHeight = with(density) { LocalConfiguration.current.screenHeightDp * density.density }
-    val topPadding = screenHeight * 0.1f
-    println("screenWidth: ${LocalConfiguration.current.screenHeightDp}")
-    println("topPadding: $topPadding")
-    LocalView.current
 
-
+    // 处理键盘操作（下一步/完成）
+    val keyboardActions = KeyboardActions(
+        onNext = { passwordFocusRequester.requestFocus() },
+        onDone = {
+            focusManager.clearFocus()
+            keyboardController?.hide()
+            activeField = null
+        }
+    )
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Red)
+            .background(Color(0xFFF5F5F5))
+            .padding(16.dp)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null  // 禁用涟漪效果
@@ -99,6 +117,12 @@ fun LoginScreen(
                 value = viewModel.username,
                 onValueChange = { viewModel.username = it },
                 label = { Text("用户名") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = keyboardActions,
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(usernameFocusRequester)
@@ -112,48 +136,82 @@ fun LoginScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = viewModel.password,
-                onValueChange = { viewModel.password = it },
-                label = { Text("密码") },
-                visualTransformation = PasswordVisualTransformation(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .focusRequester(passwordFocusRequester)
-                    .onFocusChanged { focusState ->
-                        if (focusState.isFocused) {
-                            activeField = Field.PASSWORD
-                        } else if (activeField == Field.PASSWORD) {
-                            activeField = null
-                        }
-                    }
+            PasswordTextField(
+                viewModel = viewModel,
+                passwordFocusRequester = passwordFocusRequester,
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = {
-                    // 登录逻辑...
-                    if (viewModel.isValidCredentials()) {
-                        onLoginSuccess()
-                    }
-                    // 登录后清除焦点
-                    focusManager.clearFocus()
-                    keyboardController?.hide()
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("登录")
+            Spacer(modifier = Modifier.height(24.dp))
+            CustomButton(text = "登录", onClick = {  // 登录逻辑...
+                                viewModel.login("admin","123456")
+//                if (viewModel.isValidCredentials()) {
+//                    onLoginSuccess()
+//                }
+//                // 登录后清除焦点
+//                focusManager.clearFocus()
+//                keyboardController?.hide()
             }
+            )
+
         }
     }
 
 }
+@Composable
+fun PasswordTextField(
+    viewModel: LoginViewModel, // 替换为你的ViewModel类型
+    passwordFocusRequester: FocusRequester,
+    modifier: Modifier = Modifier
+) {
+    // 控制密码是否可见的状态
+    var passwordVisible by remember { mutableStateOf(false) }
+
+    OutlinedTextField(
+        value = viewModel.password,
+        onValueChange = { viewModel.password = it },
+        label = { Text("密码") },
+        visualTransformation = if (passwordVisible) {
+            VisualTransformation.None // 显示明文
+        } else {
+            PasswordVisualTransformation() // 显示星号
+        },
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = {
+                // 处理完成操作
+            }
+        ),
+        trailingIcon = {
+            // 密码可见性切换按钮
+            IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                Icon(
+                    painter = if (passwordVisible) {
+                        painterResource(R.drawable.visibility_24px)
+                    } else {
+                        painterResource(R.drawable.visibility_off_24px)
+                    },
+                    contentDescription = if (passwordVisible) {
+                        "隐藏密码"
+                    } else {
+                        "显示密码"
+                    }
+                )
+            }
+        },
+        modifier = modifier
+            .fillMaxWidth()
+            .focusRequester(passwordFocusRequester)
+
+    )
+}
 
 
 // 用于跟踪当前活动的输入字段
-private enum class Field {
+enum class Field {
     USERNAME, PASSWORD
 }
 
@@ -165,4 +223,76 @@ class LoginViewModel : ViewModel() {
         // 这里添加实际的验证逻辑
         return username.isNotBlank() && password.length >= 6
     }
+
+
+    // 权限列表
+
+    // 执行登录操作
+    fun performLogin() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                login()
+
+                // 可能抛出异常的代码
+            } catch (e: Exception) {
+                println("Error logging in: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+    fun login(username: String, password: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // 1. 执行登录
+                val loginResult = AuthService.login(username, password)
+
+                loginResult.fold(
+                    onSuccess = { loginResponse ->
+                        Log.d(
+                            "Login",
+                            "✅ 登录成功! 状态: ${loginResponse.code}, 消息: ${loginResponse.message}"
+                        )
+
+                        // 保存 token
+                        val token = loginResponse.data.token
+//                        saveToken(token)
+                        Log.d("Login", "🔑 Token: $token")
+
+                        // 2. 使用 token 获取权限
+                        val permissionsResult = AuthService.getPermissions()
+
+                        permissionsResult.fold(
+                            onSuccess = { permissionsResponse ->
+                                Log.d("Login", "🛡️ 权限列表 (${permissionsResponse.data.size} 项):")
+                                permissionsResponse.data.forEachIndexed { index, permission ->
+                                    Log.d(
+                                        "Login",
+                                        "${index + 1}. ${permission.name} - ${permission.description}"
+                                    )
+                                }
+
+                                // 3. 保存用户信息
+//                                saveUserInfo(loginResponse.data.userInfo)
+                            },
+                            onFailure = { error ->
+                                Log.e("Login", "❌ 获取权限失败", error)
+//                                handleError(error)
+                            }
+                        )
+                    },
+                    onFailure = { error ->
+                        Log.e("Login", "❌ 登录失败", error)
+//                        handleError(error)
+                    }
+                )
+            }
+
+                // 可能抛出异常的代码
+            catch (e: Exception) {
+                println("Error logging in: ${e.message}")
+                e.printStackTrace()
+            }
+        }
+    }
+
 }

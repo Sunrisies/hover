@@ -48,10 +48,17 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.3.2"
     }
+    packagingOptions {
+        exclude("META-INF/INDEX.LIST")
+        exclude("META-INF/DEPENDENCIES")
+
+    }
 }
 
 dependencies {
     val nav_version = "2.9.1"
+    val ktor_version: String by project
+    val logback_version: String by project
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -60,13 +67,24 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("com.android.support.constraint:constraint-layout:1.1.3")
-
     implementation("com.mapbox.maps:android:11.13.1")
     implementation("com.mapbox.extension:maps-compose:11.13.1")
     implementation("androidx.navigation:navigation-compose:${nav_version}")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
+// 网络相关的库
+    implementation("io.ktor:ktor-client-core:${ktor_version}")
+// 网络相关的库
+    implementation("io.ktor:ktor-client-cio:${ktor_version}")
+    // 日志相关的库
+    implementation("io.ktor:ktor-client-logging:${ktor_version}")
+    implementation("io.ktor:ktor-client-android:${ktor_version}")
+    implementation("io.ktor:ktor-client-content-negotiation:${ktor_version}")
+// 序列化支持
+    implementation("io.ktor:ktor-serialization-jackson:${ktor_version}")
+
+// Kotlin 协程
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

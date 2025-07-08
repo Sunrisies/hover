@@ -33,8 +33,7 @@ class LoginActivity : ComponentActivity() {
             LoginScreen(
                 onLoginSuccess = {
                     startActivity(Intent(this@LoginActivity, MapActivity::class.java))
-                    finish() // 结束当前 Activity
-                    Toast.makeText(this, "Login Success", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             )
