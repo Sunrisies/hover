@@ -3,27 +3,29 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LoginRequest(
-    @SerialName("user_name") val username: String,
-    @SerialName("pass_word") val password: String
+    @SerialName("user_name") val user_name: String,
+    @SerialName("pass_word") val pass_word: String
 )
 
-@Serializable
-data class LoginResponse(
-    @SerialName("code") val code: Int,
-    @SerialName("message") val message: String,
-    @SerialName("data") val data: LoginData
-)
 
 @Serializable
 data class LoginData(
-    @SerialName("token") val token: String,
-    @SerialName("expire") val expire: Long,
-    @SerialName("user_info") val userInfo: UserInfo
+    val access_token: String,
+    val expires_in: Number,
+    val user: UserInfo
 )
 
 @Serializable
 data class UserInfo(
-    @SerialName("user_uuid") val userUuid: String,
-    @SerialName("user_name") val username: String,
-    @SerialName("permissions") val permissions: String
+    @SerialName("id") val id: Int,
+    @SerialName("uuid") val uuid: String,
+    @SerialName("user_name") val user_name: String,
+    @SerialName("email") val email: String? = null,
+    @SerialName("image") val image: String? = null,
+    @SerialName("phone") val phone: String? = null,
+    @SerialName("role") val role: String? = null,
+    @SerialName("permissions") val permissions: String,
+    @SerialName("binding") val binding: String? = null,
+    @SerialName("created_at") val created_at: String,
+    @SerialName("updated_at") val updated_at: String
 )

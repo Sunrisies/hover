@@ -45,12 +45,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hover.app.R
 import com.hover.app.ui.CustomButton
 import com.hover.app.utils.AuthService
-import com.hover.app.utils.login
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.serialization.SerializationException
+import java.io.IOException
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -144,13 +143,16 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
             CustomButton(text = "登录", onClick = {  // 登录逻辑...
-                                viewModel.login("admin","123456")
-//                if (viewModel.isValidCredentials()) {
-//                    onLoginSuccess()
-//                }
+                //
+//                println("viewModel.username=${viewModel.username}, viewModel.password=${viewModel.password}")
+                var isLogin = viewModel.login(viewModel.username, viewModel.password)
+                println("isLogin=$isLogin")
+                if (isLogin) {
+                    onLoginSuccess()
+                }
 //                // 登录后清除焦点
-//                focusManager.clearFocus()
-//                keyboardController?.hide()
+                focusManager.clearFocus()
+                keyboardController?.hide()
             }
             )
 
@@ -158,6 +160,7 @@ fun LoginScreen(
     }
 
 }
+
 @Composable
 fun PasswordTextField(
     viewModel: LoginViewModel, // 替换为你的ViewModel类型
@@ -218,7 +221,7 @@ enum class Field {
 class LoginViewModel : ViewModel() {
     var username by mutableStateOf("")
     var password by mutableStateOf("")
-
+    var isLogin by mutableStateOf(false)
     fun isValidCredentials(): Boolean {
         // 这里添加实际的验证逻辑
         return username.isNotBlank() && password.length >= 6
@@ -231,7 +234,40 @@ class LoginViewModel : ViewModel() {
     fun performLogin() {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                login()
+                val result = AuthService.getPermissions()
+
+                result.fold(
+                    onSuccess = { response ->
+                        Log.d(
+                            "Login",
+                            "✅ 请求成功! 状态: ${response.code}, 消息: ${response.message}"
+                        )
+                        Log.d("Login", "🛡️ 权限列表 (${response.data} 项):")
+                        response.data.forEachIndexed { index, permission ->
+                            Log.d(
+                                "Login",
+                                "${index + 1}. ${permission.name} - ${permission.description}"
+                            )
+                        }
+                    },
+                    onFailure = { error ->
+                        Log.e("Login", "❌ 请求失败", error)
+                        when (error) {
+                            is ClientRequestException ->
+                                Log.e("Login", "客户端错误: ${error.response.status}")
+
+                            is ServerResponseException ->
+                                Log.e("Login", "服务器错误: ${error.response.status}")
+
+                            is IOException ->
+                                Log.e("Login", "网络错误: ${error.message}")
+
+                            else ->
+                                Log.e("Login", "未知错误: ${error.message}")
+                        }
+                    }
+                )
+
 
                 // 可能抛出异常的代码
             } catch (e: Exception) {
@@ -240,7 +276,9 @@ class LoginViewModel : ViewModel() {
             }
         }
     }
-    fun login(username: String, password: String) {
+
+    fun login(username: String, password: String): Boolean {
+
         viewModelScope.launch(Dispatchers.IO) {
             try {
                 // 1. 执行登录
@@ -254,45 +292,50 @@ class LoginViewModel : ViewModel() {
                         )
 
                         // 保存 token
-                        val token = loginResponse.data.token
+                        val token = loginResponse.data
 //                        saveToken(token)
                         Log.d("Login", "🔑 Token: $token")
 
                         // 2. 使用 token 获取权限
-                        val permissionsResult = AuthService.getPermissions()
+                        AuthService.getPermissions()
 
-                        permissionsResult.fold(
-                            onSuccess = { permissionsResponse ->
-                                Log.d("Login", "🛡️ 权限列表 (${permissionsResponse.data.size} 项):")
-                                permissionsResponse.data.forEachIndexed { index, permission ->
-                                    Log.d(
-                                        "Login",
-                                        "${index + 1}. ${permission.name} - ${permission.description}"
-                                    )
-                                }
-
-                                // 3. 保存用户信息
-//                                saveUserInfo(loginResponse.data.userInfo)
-                            },
-                            onFailure = { error ->
-                                Log.e("Login", "❌ 获取权限失败", error)
-//                                handleError(error)
-                            }
-                        )
+//                        permissionsResult.fold(
+//                            onSuccess = { permissionsResponse ->
+//                                Log.d("Login", "🛡️ 权限列表 (${permissionsResponse.data.size} 项):")
+//                                permissionsResponse.data.forEachIndexed { index, permission ->
+//                                    Log.d(
+//                                        "Login",
+//                                        "${index + 1}. ${permission.name} - ${permission.description}"
+//                                    )
+//                                }
+//
+//                                // 3. 保存用户信息
+////                                saveUserInfo(loginResponse.data.userInfo)
+//                            },
+//                            onFailure = { error ->
+//                                Log.e("Login", "❌ 获取权限失败", error)
+////                                handleError(error)
+//                            }
+//                        )
+                        isLogin = true
                     },
                     onFailure = { error ->
                         Log.e("Login", "❌ 登录失败", error)
 //                        handleError(error)
+                        isLogin = false
                     }
                 )
             }
 
-                // 可能抛出异常的代码
+            // 可能抛出异常的代码
             catch (e: Exception) {
                 println("Error logging in: ${e.message}")
                 e.printStackTrace()
+                isLogin = false
+
             }
         }
+        return isLogin
     }
 
 }

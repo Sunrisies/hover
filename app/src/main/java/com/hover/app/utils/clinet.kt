@@ -1,7 +1,7 @@
 package com.hover.app.utils
 
+import LoginData
 import LoginRequest
-import LoginResponse
 import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -123,8 +123,7 @@ object AuthService {
         }
     }
     // 登录
-    suspend fun login(username: String, password: String): Result<LoginResponse> {
-        println("正在登录...")
+    suspend fun login(username: String, password: String): Result<BaseResponse<LoginData>> {
         return SafeNetworkClient.safeRequest {
             post(LOGIN_URL) {
                 timeout {
@@ -136,35 +135,6 @@ object AuthService {
             }.body()
         }
     }
-
-}
-
-// 登录功能
-suspend fun login() {
-    val result = AuthService.getPermissions()
-
-    result.fold(
-        onSuccess = { response ->
-            Log.d("Login", "✅ 请求成功! 状态: ${response.code}, 消息: ${response.message}")
-            Log.d("Login", "🛡️ 权限列表 (${response.data} 项):")
-            response.data.forEachIndexed { index, permission ->
-                Log.d("Login", "${index + 1}. ${permission.name} - ${permission.description}")
-            }
-        },
-        onFailure = { error ->
-            Log.e("Login", "❌ 请求失败", error)
-            when (error) {
-                is ClientRequestException ->
-                    Log.e("Login", "客户端错误: ${error.response.status}")
-                is ServerResponseException ->
-                    Log.e("Login", "服务器错误: ${error.response.status}")
-                is IOException ->
-                    Log.e("Login", "网络错误: ${error.message}")
-                else ->
-                    Log.e("Login", "未知错误: ${error.message}")
-            }
-        }
-    )
 
 }
 
