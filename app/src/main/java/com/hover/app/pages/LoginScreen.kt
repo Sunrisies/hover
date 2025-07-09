@@ -129,38 +129,9 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-//            OutlinedTextField(
-//                value = viewModel.username,
-//                onValueChange = { viewModel.username = it
-//                    expanded = it.isNotEmpty()
-//                                },
-//                label = { Text("用户名") },
-//                singleLine = true,
-//                keyboardOptions = KeyboardOptions(
-//                    keyboardType = KeyboardType.Text,
-//                    imeAction = ImeAction.Next
-//                ),
-//                trailingIcon = {
-//
-//                },
-//                keyboardActions = keyboardActions,
-//                modifier = Modifier
-//                    .fillMaxWidth()
-//                    .focusRequester(usernameFocusRequester)
-//                    .onFocusChanged { focusState ->
-//                        if (focusState.isFocused) {
-//                            activeField = Field.USERNAME
-//                        } else if (activeField == Field.USERNAME) {
-//                            activeField = null
-//                        }
-//                    }
-//            )
          var dropdownItems =   viewModel.savedUsersList.map { user ->
-                Log.d("Log------in", "user=$user")
              user.username
             }
-//            Log.d("--------","asdsadadas:${dropdownItems}")
-//            val dropdownItems = listOf("用户1", "用户2", "用户3","用户4","用户5","用户6") // 下拉列表的选项
             UsernameTextField(
                 viewModel = viewModel,
                 usernameFocusRequester = usernameFocusRequester,
@@ -182,7 +153,6 @@ fun LoginScreen(
                 println("isLogin=$isLogin")
                 if (isLogin) {
                     SPUtils.getInstance("sp_name").put("loginuser_" + viewModel.username, viewModel.password);
-//                    SPUtils.getInstance(Config.SP_NAME).put(Config.MODEL_FLAG, false);
                     onLoginSuccess()
                 }
 //                // 登录后清除焦点
@@ -201,9 +171,7 @@ fun UsernameTextField(
     modifier: Modifier = Modifier,
     dropdownItems: List<String> // 下拉列表的选项
 ) {
-    var expanded by remember { mutableStateOf(true) } // 控制下拉列表的展开状态
-    var selectedUsername by remember { mutableStateOf("") } // 当前选中的用户名
-    Log.d("---------------","1232131${viewModel.savedUsersList}")
+    var expanded by remember { mutableStateOf(false) } // 控制下拉列表的展开状态
     OutlinedTextField(
         value = viewModel.username,
         onValueChange = {
@@ -229,12 +197,6 @@ fun UsernameTextField(
             .fillMaxWidth()
             .focusRequester(usernameFocusRequester)
             .onFocusChanged { focusState ->
-//                val activeField = null
-//                if (focusState.isFocused) {
-//                    var activeField = Field.USERNAME
-//                } else if (activeField == Field.USERNAME) {
-//                    activeField = null
-//                }
             }
     )
     Box(modifier = Modifier.fillMaxWidth(),
@@ -251,16 +213,15 @@ fun UsernameTextField(
                     text = { Text(item) },
                     onClick = {
                         viewModel.username = item // 更新输入框内容
-//                        viewModel.password = item // 更新输入框内容
-                        // viewModel.savedUsersList 找到对应的账号吗，提取密码
                         viewModel.savedUsersList.forEach { user ->
                             if (user.username == item) {
                                 viewModel.password = user.password
+                                // 调用登录接口
+                                viewModel.login(item, user.password)
                             }
                         }
                         expanded = false // 关闭下拉菜单
                     },
-//                modifier = Modifier.padding(8.dp)
                 )
             }
         }
