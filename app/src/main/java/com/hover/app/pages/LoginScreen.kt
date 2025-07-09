@@ -10,13 +10,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -33,7 +29,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,7 +38,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
@@ -66,7 +60,6 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginScreen(
@@ -82,7 +75,7 @@ fun LoginScreen(
 //   var savedUsers = viewModel.getSavedUsers()
 //    Log.d("Login", "savedUsers=$savedUsers")
 //     处理键盘操作（下一步/完成）
-    val keyboardActions = KeyboardActions(
+    KeyboardActions(
         onNext = { passwordFocusRequester.requestFocus() },
         onDone = {
             focusManager.clearFocus()
@@ -90,7 +83,6 @@ fun LoginScreen(
             activeField = null
         }
     )
-    var expanded by remember { mutableStateOf(false) }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -129,8 +121,8 @@ fun LoginScreen(
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-         var dropdownItems =   viewModel.savedUsersList.map { user ->
-             user.username
+            var dropdownItems = viewModel.savedUsersList.map { user ->
+                user.username
             }
             UsernameTextField(
                 viewModel = viewModel,
@@ -152,7 +144,8 @@ fun LoginScreen(
                 var isLogin = viewModel.login(viewModel.username, viewModel.password)
                 println("isLogin=$isLogin")
                 if (isLogin) {
-                    SPUtils.getInstance("sp_name").put("loginuser_" + viewModel.username, viewModel.password);
+                    SPUtils.getInstance("sp_name")
+                        .put("loginuser_" + viewModel.username, viewModel.password)
                     onLoginSuccess()
                 }
 //                // 登录后清除焦点
@@ -164,6 +157,7 @@ fun LoginScreen(
         }
     }
 }
+
 @Composable
 fun UsernameTextField(
     viewModel: LoginViewModel, // 替换为你的ViewModel类型
@@ -199,14 +193,18 @@ fun UsernameTextField(
             .onFocusChanged { focusState ->
             }
     )
-    Box(modifier = Modifier.fillMaxWidth(),
+    Box(
+        modifier = Modifier.fillMaxWidth(),
         contentAlignment = Alignment.TopEnd,
-        ){
+    ) {
         // 下拉列表
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.width(TextFieldDefaults.MinWidth).background(Color.White).height(100.dp),
+            modifier = Modifier
+                .width(TextFieldDefaults.MinWidth)
+                .background(Color.White)
+                .height(100.dp),
         ) {
             dropdownItems.forEach { item ->
                 DropdownMenuItem(
@@ -298,8 +296,8 @@ class LoginViewModel : ViewModel() {
 
     var savedUsersList by mutableStateOf(mutableListOf<SavedUser>())
 
-    init{
-        Log.d("LoginViewModel","init")
+    init {
+        Log.d("LoginViewModel", "init")
         savedUsersList = loadSavedUsers().toMutableList()
     }
 
@@ -308,6 +306,7 @@ class LoginViewModel : ViewModel() {
         // 这里添加实际的验证逻辑
         return username.isNotBlank() && password.length >= 6
     }
+
     private fun loadSavedUsers(): List<SavedUser> {
         val sp = SPUtils.getInstance("sp_name")
         val allEntries = sp.all // 获取所有存储的键值对

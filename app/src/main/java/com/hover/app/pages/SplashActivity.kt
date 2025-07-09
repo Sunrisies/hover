@@ -1,7 +1,6 @@
 package com.hover.app.pages
 
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -15,9 +14,6 @@ class SplashActivity : ComponentActivity() {
     private val MIN_SPLASH_DURATION = 2000L
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // 安装SplashScreen API（Android 12+）
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-//        val splashScreen = installSplashScreen()
 
         super.onCreate(savedInstanceState)
         setContent {

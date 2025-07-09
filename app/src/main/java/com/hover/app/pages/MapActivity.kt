@@ -9,15 +9,8 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.mapbox.geojson.Point
-import com.mapbox.maps.CameraOptions
-import com.mapbox.maps.MapInitOptions
-import com.mapbox.maps.MapView
 import com.mapbox.maps.MapboxMap
-import com.mapbox.maps.Style
 import com.mapbox.maps.dsl.cameraOptions
-import com.mapbox.maps.extension.style.atmosphere.generated.atmosphere
-import com.mapbox.maps.extension.style.color.colorTheme
-import com.mapbox.maps.extension.style.style
 import kotlinx.coroutines.runBlocking
 
 
@@ -51,8 +44,6 @@ class MapActivity : ComponentActivity() {
             )
         }
     }
-
-
 
 
     companion object {

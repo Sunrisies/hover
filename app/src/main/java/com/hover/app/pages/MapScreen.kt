@@ -1,8 +1,6 @@
 package com.hover.app.pages
 
-import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -13,7 +11,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,14 +21,12 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -40,7 +35,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -56,8 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.BlurEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
@@ -65,9 +57,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.res.imageResource
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.semantics.Role.Companion.Checkbox
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -75,7 +65,10 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hover.app.R
+import com.hover.app.ui.CustomButton
 import com.mapbox.geojson.Point
+import com.mapbox.maps.Style
+import com.mapbox.maps.extension.compose.MapEffect
 import com.mapbox.maps.extension.compose.MapboxMap
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
 import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
@@ -83,13 +76,6 @@ import com.mapbox.maps.extension.compose.annotation.generated.PolylineAnnotation
 import com.mapbox.maps.extension.compose.annotation.rememberIconImage
 import com.mapbox.maps.extension.compose.style.MapStyle
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
-import com.hover.app.ui.CustomButton
-import com.mapbox.maps.MapboxMap
-import com.mapbox.maps.MapboxDelicateApi
-import com.mapbox.maps.Style
-import com.mapbox.maps.extension.compose.MapEffect
-import com.mapbox.maps.extension.style.sources.generated.ImageSource
-import com.mapbox.maps.extension.style.sources.getSourceAs
 
 //class MapScreen1:ComponentActivity{
 //    override fun onCreate(savedInstanceState: Bundle?) {
@@ -112,7 +98,6 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
         animationSpec = tween(durationMillis = 300),
         label = "drawerAnimation"
     )
-    var mapboxMap: MapboxMap
     Box(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -176,7 +161,7 @@ fun MapboxMapContent(
 ) {
     val context = LocalContext.current
 
-     MapboxMap(
+    MapboxMap(
         modifier = Modifier.fillMaxSize(),
         mapViewportState = rememberMapViewportState {
             setCameraOptions {
@@ -191,7 +176,7 @@ fun MapboxMapContent(
                 alignment = Alignment.BottomStart,
             )
         },
-         style = { MapStyle(style = Style.STANDARD_SATELLITE)},
+        style = { MapStyle(style = Style.STANDARD_SATELLITE) },
 //        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
 //        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
         onMapClickListener = { clickedPoint ->
@@ -207,12 +192,12 @@ fun MapboxMapContent(
 
         ) {
 //         @OptIn(MapboxDelicateApi::class)
-         MapEffect(Unit) {
-             val ID_IMAGE_SOURCE = ""
+        MapEffect(Unit) {
+            ""
 //             println("MapEffect: ${it.toString}")
 //             val imageSource: ImageSource = it.mapboxMap.getStyle()
 //             imageSource.updateImage(bitmap)
-         }
+        }
         // 1. 绘制连接所有点的折线
         if (markers.size >= 2) {
             PolylineAnnotation(
@@ -309,7 +294,7 @@ fun TopToolbar(
 // 设置抽屉内容
 @Composable
 fun SettingsDrawerContent(
-    onLogout:() ->Unit,
+    onLogout: () -> Unit,
 ) {
     // 添加垂直滚动支持
     val scrollState = rememberScrollState()
@@ -361,9 +346,11 @@ fun SettingsDrawerContent(
                 "船速" -> ShipSpeed(
                     onConfirm = { /* 确认船速 */ }
                 )
+
                 "安全" -> SecureSettings(
                     onConfirm = { /* 确认安全设置 */ }
                 )
+
                 "地图" -> MapTypeSettings()
 //                "通用" -> PrivacySettings()
                 "关于" -> AboutSettings(onLogout)
@@ -376,8 +363,7 @@ fun SettingsDrawerContent(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SecureSettings(onConfirm: () -> Unit){
-    var reminderText by remember { mutableStateOf("") }
+fun SecureSettings(onConfirm: () -> Unit) {
     var actionText by remember { mutableStateOf("无动作") }
     var expanded by remember { mutableStateOf(false) }
     val actions = listOf("无动作", "发出警报", "自动返航")
@@ -468,6 +454,7 @@ fun SecureSettings(onConfirm: () -> Unit){
         }
     }
 }
+
 @Composable
 fun CustomTextField(
     value: String,
@@ -478,7 +465,7 @@ fun CustomTextField(
     var focused by remember { mutableStateOf(false) }
 
     val keyboardController = LocalSoftwareKeyboardController.current
-    val onOutsideClick = {
+    {
         if (focused) {
             keyboardController?.hide()
             focused = false
@@ -488,7 +475,8 @@ fun CustomTextField(
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
-        modifier = modifier.fillMaxWidth()
+        modifier = modifier
+            .fillMaxWidth()
             .border(1.dp, Color.White, RoundedCornerShape(4.dp))
             .padding(4.dp)
             .pointerInput(Unit) {
@@ -568,8 +556,6 @@ fun ShipSpeed(
         CustomButton(text = "确定", onClick = { onConfirm() })
     }
 }
-
-
 
 
 @Composable
@@ -675,9 +661,9 @@ fun MapTypeOption(name: String, isSelected: Boolean) {
             checked = isSelected,
             onCheckedChange = { /* 选择船速 */ },
             colors = CheckboxDefaults.colors(
-                    checkedColor = Color(0xFF0066CC),
-            uncheckedColor = Color.Gray
-        )
+                checkedColor = Color(0xFF0066CC),
+                uncheckedColor = Color.Gray
+            )
         )
 
         Spacer(modifier = Modifier.width(16.dp))
