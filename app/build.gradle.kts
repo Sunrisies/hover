@@ -56,6 +56,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.material)
+    implementation(libs.androidx.recyclerview)
+    implementation(libs.androidx.fragment)
     val nav_version = "2.9.1"
     val ktor_version: String by project
     val logback_version: String by project
@@ -72,6 +75,7 @@ dependencies {
     implementation("androidx.navigation:navigation-compose:${nav_version}")
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.5.1")
+    implementation("com.android.support.constraint:constraint-layout:1.1.3")
 // 网络相关的库
     implementation("io.ktor:ktor-client-core:${ktor_version}")
 // 网络相关的库
@@ -85,6 +89,9 @@ dependencies {
 
 // Kotlin 协程
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.9.0")
+
+    // 工具库
+    implementation("com.blankj:utilcodex:1.31.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
