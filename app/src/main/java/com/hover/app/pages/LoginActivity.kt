@@ -1,5 +1,6 @@
 package com.hover.app.pages
 
+import LoginData
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -16,6 +17,8 @@ import com.hover.app.utils.AuthService
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -44,11 +47,20 @@ enum class Field {
     USERNAME, PASSWORD
 }
 
+sealed class LoginState {
+    object Idle : LoginState()
+    object Loading : LoginState()
+    data class Success(val token: LoginData) : LoginState()
+    data class Error(val exception: Throwable) : LoginState()
+}
+
 class LoginViewModel : ViewModel() {
     var username by mutableStateOf("")
     var password by mutableStateOf("")
-    var isLogin by mutableStateOf(false)
 
+    //    var isLogin by mutableStateOf(false)
+    private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
+    val loginState: StateFlow<LoginState> = _loginState
 
     var savedUsersList by mutableStateOf(mutableListOf<SavedUser>())
 
@@ -123,67 +135,25 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    fun login(username: String, password: String): Boolean {
+    suspend fun login(username: String, password: String) {
+        _loginState.value = LoginState.Loading
 
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                // 1. 执行登录
-                val loginResult = AuthService.login(username, password)
-
-                loginResult.fold(
-                    onSuccess = { loginResponse ->
-                        Log.d(
-                            "Login",
-                            "✅ 登录成功! 状态: ${loginResponse.code}, 消息: ${loginResponse.message}"
-                        )
-
-                        // 保存 token
-                        val token = loginResponse.data
-//                        saveToken(token)
-                        Log.d("Login", "🔑 Token: $token")
-
-                        // 2. 使用 token 获取权限
-                        AuthService.getPermissions()
-
-//                        permissionsResult.fold(
-//                            onSuccess = { permissionsResponse ->
-//                                Log.d("Login", "🛡️ 权限列表 (${permissionsResponse.data.size} 项):")
-//                                permissionsResponse.data.forEachIndexed { index, permission ->
-//                                    Log.d(
-//                                        "Login",
-//                                        "${index + 1}. ${permission.name} - ${permission.description}"
-//                                    )
-//                                }
-//
-//                                // 3. 保存用户信息
-////                                saveUserInfo(loginResponse.data.userInfo)
-//                            },
-//                            onFailure = { error ->
-//                                Log.e("Login", "❌ 获取权限失败", error)
-////                                handleError(error)
-//                            }
-//                        )
-                        isLogin = true
-                    },
-                    onFailure = { error ->
-                        Log.e("Login", "❌ 登录失败", error)
-//                        handleError(error)
-                        isLogin = false
-                    }
-                )
-            }
-
-            // 可能抛出异常的代码
-            catch (e: Exception) {
-                println("Error logging in: ${e.message}")
-                e.printStackTrace()
-                isLogin = false
-
-            }
+        try {
+            val result = AuthService.login(username, password)
+            result.fold(
+                onSuccess = { response ->
+                    val token = response.data
+                    // 保存token等操作
+                    _loginState.value = LoginState.Success(token)
+                },
+                onFailure = { error ->
+                    _loginState.value = LoginState.Error(error)
+                }
+            )
+        } catch (e: Exception) {
+            _loginState.value = LoginState.Error(e)
         }
-        return isLogin
     }
-
 }
 
 
