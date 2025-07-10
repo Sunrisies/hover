@@ -1,8 +1,13 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.TimeZone
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
+
 
 android {
     namespace = "com.hover.app"
@@ -13,14 +18,16 @@ android {
         minSdk = 26
         targetSdk = 35
         versionCode = 1
-        versionName = "1.0"
+        buildConfigField("String", "BUILD_DATE", "\"${getBuildDate()}\"")
+        versionName = "1.0.${getBuildDate()}"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
     }
 
     buildTypes {
         release {
-            isMinifyEnabled = true
+            isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -36,6 +43,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     splits {
         abi {
@@ -53,6 +61,7 @@ android {
         exclude("META-INF/DEPENDENCIES")
 
     }
+
 }
 
 dependencies {
@@ -99,4 +108,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+// 定义在文件底部
+fun getBuildDate(): String {
+    return SimpleDateFormat("yyyyMMdd").apply {
+        timeZone = TimeZone.getTimeZone("GMT+08:00")
+    }.format(Date())
 }
