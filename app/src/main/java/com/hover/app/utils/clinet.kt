@@ -109,9 +109,10 @@ object SafeNetworkClient {
 
 // 认证服务
 object AuthService {
+    var BaseUrl = "http://api.chaoyang1024.top:18080/"
     // 使用模拟器专用地址
-    private const val PERMISSIONS_URL = "http://192.168.10.13:18080/api/auth/permissions"
-    private const val LOGIN_URL = "http://192.168.10.13:18080/api/auth/login"
+    private  val PERMISSIONS_URL = BaseUrl + "api/auth/permissions"
+    private  val LOGIN_URL = BaseUrl + "api/auth/login"
     suspend fun getPermissions(): Result<BaseResponse<List<Permission>>> {
         println("正在请求权限数据...")
         return SafeNetworkClient.safeRequest {
