@@ -26,7 +26,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.DropdownMenuItem
@@ -36,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -110,8 +110,11 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.1f))
-                    .clickable { viewModel.setIsDrawerOpen(false) }
+                    .pointerInput(Unit) {
+                        detectTapGestures {
+                            viewModel.setIsDrawerOpen(false)
+                        }
+                    }
             )
         }
 
@@ -287,7 +290,7 @@ fun SettingsDrawerContent(
 ) {
     // 添加垂直滚动支持
     val scrollState = rememberScrollState()
-    var selectedSetting by remember { mutableStateOf("安全") } // 当前选中的设置项
+    var selectedSetting by remember { mutableStateOf("通用") } // 当前选中的设置项
     val menuItems = listOf("船速", "安全", "地图", "通用", "关于") // 当前左侧数据列表
 
     Row(
@@ -341,7 +344,7 @@ fun SettingsDrawerContent(
                 )
 
                 "地图" -> MapTypeSettings()
-//                "通用" -> PrivacySettings()
+                "通用" -> GeneralSettings()
                 "关于" -> AboutSettings(onLogout)
             }
 
@@ -643,10 +646,6 @@ fun MapTypeOption(name: String, isSelected: Boolean) {
             .clickable { /* 选择船速 */ },
         verticalAlignment = Alignment.CenterVertically
     ) {
-//        RadioButton(
-//            selected = isSelected,
-//            onClick = { /* 选择船速 */ }
-//        )
         Checkbox(
             checked = isSelected,
             onCheckedChange = { /* 选择船速 */ },
@@ -666,43 +665,30 @@ fun MapTypeOption(name: String, isSelected: Boolean) {
     }
 }
 
-@Composable
-fun LayerControlSettings() {
-    Column {
-        Text(
-            text = "管理地图图层",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // 图层选项
-        LayerOption("交通状况", true)
-        LayerOption("兴趣点", true)
-        LayerOption("地形等高线", false)
-        LayerOption("3D建筑", false)
-    }
-}
 
 @Composable
 fun LayerOption(name: String, isEnabled: Boolean) {
     Row(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Text(
             text = name,
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurface
+            color = Color.White
         )
 
         Switch(
             checked = isEnabled,
-            onCheckedChange = { /* 切换图层状态 */ }
+            onCheckedChange = { /* 切换图层状态 */ },
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = Color(0xFF0066CC),
+                uncheckedThumbColor = Color.White,
+                checkedTrackColor = Color(0xFF0066CC).copy(alpha = 0.3f),
+                uncheckedTrackColor = Color.White.copy(alpha = 0.5f)
+            )
         )
     }
 }
@@ -716,39 +702,92 @@ fun AboutSettings(onLogout: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Check for updates button
-        Button(
-            onClick = { /* Handle check for updates */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Text(text = "检查更新", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Use help button
-        Button(
-            onClick = { /* Handle use help */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Text(text = "使用帮助", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Logout button
-        Button(
-            onClick = { /* Handle logout */ },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(48.dp)
-        ) {
-            Text(text = "退出登录", fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        }
         CustomButton(text = "退出登录", onClick = { onLogout() })
+    }
+}
+
+@Composable
+fun GeneralSettings() {
+    var isHardDecode by remember { mutableStateOf(true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "重复次数", color = Color.White)
+            CustomTextField(
+                value = "",
+                onValueChange = {},
+                placeholder = {
+                    Text(
+                        text = "重复次数",
+                        color = Color.White,
+                        fontWeight = FontWeight.Normal
+                    )
+                },
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(30.dp)
+            )
+            CustomButton(text = "确定", onClick = { })
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = "视频解码",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Checkbox(
+                checked = isHardDecode,
+                onCheckedChange = { isHardDecode = it },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = Color(0xFF0066CC),
+                    uncheckedColor = Color.Gray
+                )
+            )
+
+
+            Text(
+                text = "硬解",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+            Checkbox(
+                checked = isHardDecode,
+                onCheckedChange = { isHardDecode = it },
+                colors = CheckboxDefaults.colors(
+                    checkedColor = Color(0xFF0066CC),
+                    uncheckedColor = Color.Gray
+                )
+            )
+
+
+            Text(
+                text = "软解",
+                style = MaterialTheme.typography.bodyLarge,
+                color = Color.White
+            )
+
+        }
+        LayerOption("界面常亮", true)
+
+        LayerOption("语音播报", false)
+
+        LayerOption("显示航迹", true)
     }
 }

@@ -17,7 +17,7 @@
       ],
       "attributes": [],
       "versionCode": 1,
-      "versionName": "1.0.20250710",
+      "versionName": "1.0.20250711",
       "outputFile": "app-armeabi-v7a-release.apk"
     },
     {
@@ -30,21 +30,8 @@
       ],
       "attributes": [],
       "versionCode": 1,
-      "versionName": "1.0.20250710",
+      "versionName": "1.0.20250711",
       "outputFile": "app-x86-release.apk"
-    },
-    {
-      "type": "ONE_OF_MANY",
-      "filters": [
-        {
-          "filterType": "ABI",
-          "value": "arm64-v8a"
-        }
-      ],
-      "attributes": [],
-      "versionCode": 1,
-      "versionName": "1.0.20250710",
-      "outputFile": "app-arm64-v8a-release.apk"
     },
     {
       "type": "ONE_OF_MANY",
@@ -56,8 +43,21 @@
       ],
       "attributes": [],
       "versionCode": 1,
-      "versionName": "1.0.20250710",
+      "versionName": "1.0.20250711",
       "outputFile": "app-x86_64-release.apk"
+    },
+    {
+      "type": "ONE_OF_MANY",
+      "filters": [
+        {
+          "filterType": "ABI",
+          "value": "arm64-v8a"
+        }
+      ],
+      "attributes": [],
+      "versionCode": 1,
+      "versionName": "1.0.20250711",
+      "outputFile": "app-arm64-v8a-release.apk"
     }
   ],
   "elementType": "File",
@@ -68,8 +68,8 @@
       "baselineProfiles": [
         "baselineProfiles/1/app-armeabi-v7a-release.dm",
         "baselineProfiles/1/app-x86-release.dm",
-        "baselineProfiles/1/app-arm64-v8a-release.dm",
-        "baselineProfiles/1/app-x86_64-release.dm"
+        "baselineProfiles/1/app-x86_64-release.dm",
+        "baselineProfiles/1/app-arm64-v8a-release.dm"
       ]
     },
     {
@@ -78,8 +78,8 @@
       "baselineProfiles": [
         "baselineProfiles/0/app-armeabi-v7a-release.dm",
         "baselineProfiles/0/app-x86-release.dm",
-        "baselineProfiles/0/app-arm64-v8a-release.dm",
-        "baselineProfiles/0/app-x86_64-release.dm"
+        "baselineProfiles/0/app-x86_64-release.dm",
+        "baselineProfiles/0/app-arm64-v8a-release.dm"
       ]
     }
   ],

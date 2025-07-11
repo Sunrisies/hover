@@ -1,6 +1,5 @@
 package com.hover.app.utils
 
-import LoginData
 import LoginRequest
 import LoginResponse
 import android.util.Log
@@ -13,7 +12,6 @@ import io.ktor.client.plugins.logging.*
 import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.serialization.jackson.*
-import java.io.IOException
 import kotlinx.serialization.Serializable
 // 基础响应模型
 @Serializable

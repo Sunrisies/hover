@@ -18,7 +18,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             // 检查初始登录状态
             val isLoggedIn = runBlocking { authManager.isLoggedIn.first() }
-            if (isLoggedIn) {
+            if (!isLoggedIn) {
                 LaunchedEffect(Unit) {
                     startActivity(Intent(this@MainActivity, MapActivity::class.java))
                     finish() // 结束当前 Activity

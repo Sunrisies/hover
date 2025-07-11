@@ -17,13 +17,9 @@ import com.blankj.utilcode.util.ToastUtils
 import com.hover.app.utils.AuthService
 import com.hover.app.utils.PublicKeyResponse
 import com.hover.app.utils.RsaUtils
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.client.plugins.ServerResponseException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.IOException
 
 
 class LoginActivity : ComponentActivity() {
@@ -35,7 +31,7 @@ class LoginActivity : ComponentActivity() {
             LoginScreen(
                 onLoginSuccess = {
                     startActivity(Intent(this@LoginActivity, MapActivity::class.java))
-                    Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show()
+//                    Toast.makeText(this, "登录成功", Toast.LENGTH_SHORT).show()
                     finish()
                 }
             )
@@ -96,54 +92,6 @@ class LoginViewModel : ViewModel() {
                     null
                 }
             }
-    }
-
-    // 执行登录操作
-    fun performLogin() {
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val result = AuthService.getPermissions()
-
-                result.fold(
-                    onSuccess = { response ->
-                        Log.d(
-                            "Login",
-                            "✅ 请求成功! 状态: ${response.code}, 消息: ${response.message}"
-                        )
-                        Log.d("Login", "🛡️ 权限列表 (${response.data} 项):")
-                        response.data.forEachIndexed { index, permission ->
-                            Log.d(
-                                "Login",
-                                "${index + 1}. ${permission.name} - ${permission.description}"
-                            )
-                        }
-
-                    },
-                    onFailure = { error ->
-                        Log.e("Login", "❌ 请求失败", error)
-                        when (error) {
-                            is ClientRequestException ->
-                                Log.e("Login", "客户端错误: ${error.response.status}")
-
-                            is ServerResponseException ->
-                                Log.e("Login", "服务器错误: ${error.response.status}")
-
-                            is IOException ->
-                                Log.e("Login", "网络错误: ${error.message}")
-
-                            else ->
-                                Log.e("Login", "未知错误: ${error.message}")
-                        }
-                    }
-                )
-
-
-                // 可能抛出异常的代码
-            } catch (e: Exception) {
-                println("Error logging in: ${e.message}")
-                e.printStackTrace()
-            }
-        }
     }
 
     suspend fun login(username: String, password: String) {
