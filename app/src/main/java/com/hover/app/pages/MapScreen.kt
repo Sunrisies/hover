@@ -1,5 +1,6 @@
 package com.hover.app.pages
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
@@ -39,6 +40,7 @@ import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
@@ -67,16 +69,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hover.app.R
 import com.hover.app.ui.CustomButton
 import com.mapbox.geojson.Point
+import com.mapbox.maps.MapView
+import com.mapbox.maps.RenderFrameFinished
 import com.mapbox.maps.Style
+import com.mapbox.maps.debugoptions.MapViewDebugOptions
 import com.mapbox.maps.extension.compose.MapEffect
+import com.mapbox.maps.extension.compose.MapState
 import com.mapbox.maps.extension.compose.MapboxMap
 import com.mapbox.maps.extension.compose.animation.viewport.rememberMapViewportState
 import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
 import com.mapbox.maps.extension.compose.annotation.generated.PolylineAnnotation
 import com.mapbox.maps.extension.compose.annotation.rememberIconImage
+import com.mapbox.maps.extension.compose.rememberMapState
 import com.mapbox.maps.extension.compose.style.MapStyle
 import com.mapbox.maps.extension.style.layers.properties.generated.IconAnchor
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
+import com.mapbox.maps.plugin.scalebar.generated.ScaleBarSettings
+import com.mapbox.maps.plugin.scalebar.scalebar
+
+
 
 @Composable
 fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
@@ -106,6 +117,24 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
             markerCount = markers.size,
             onSettingsClick = { viewModel.setIsDrawerOpen(true) }
         )
+        // 在屏幕的左侧添加一些图标
+        Box(
+            modifier = Modifier.padding(top = 50.dp,start = 8.dp)
+        ){
+            IconButton(
+                modifier = Modifier
+                    .size(30.dp),
+                onClick = {}
+            )
+            {
+                Icon(
+                    painter = painterResource(R.mipmap.img_ship_task),
+                    contentDescription = "设置",
+                    tint = Color.White.copy(alpha = 0.9f), // 使用 tint 参数设置图标颜色
+                    modifier = Modifier.size(30.dp)
+                )
+            }
+        }
         if (viewModel.isDrawerOpen) {
             Box(
                 modifier = Modifier
@@ -152,7 +181,9 @@ fun MapboxMapContent(
     viewModel: MapViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    var mapState = rememberMapState{
 
+    }
     MapboxMap(
         modifier = Modifier.fillMaxSize(),
         mapViewportState = rememberMapViewportState {
@@ -163,32 +194,55 @@ fun MapboxMapContent(
                 bearing(0.0)
             }
         },
+        mapState = mapState,
         scaleBar = {
+            // 自定义比例尺：缩小文字和条的高度
             ScaleBar(
+                textSize = 10.sp,      // 调小文字（默认约14sp）
+                ratio = 0.05f ,   // 宽度设为可用空间一半
                 alignment = Alignment.BottomStart,
             )
         },
+        logo = {
+//            Logo()
+        },
+        attribution = {},
         style = { MapStyle(style = Style.STANDARD_SATELLITE) },
 //        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
 //        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
-        onMapClickListener = { clickedPoint ->
+        onMapLongClickListener = { clickedPoint ->
             println("onMapClick: $clickedPoint")
             println("isDrawerOpen: ${viewModel.isDrawerOpen}")
             markers.add(clickedPoint)
             markerStates[markers.lastIndex] = clickedPoint
             println("添加标记在: $clickedPoint")
-
-
+            Log.d("地图的事件","onMapLongClick: ${mapState.cameraChangedEvents}")
             false
         },
 
         ) {
-//         @OptIn(MapboxDelicateApi::class)
-        MapEffect(Unit) {
-            ""
-//             println("MapEffect: ${it.toString}")
-//             val imageSource: ImageSource = it.mapboxMap.getStyle()
-//             imageSource.updateImage(bitmap)
+        LaunchedEffect(Unit) {
+            mapState.mapLoadedEvents.collect {
+                Log.d("Map", "地图加载完成")
+
+            }
+        }
+
+
+        MapEffect(Unit,Unit){ mapView ->
+//            mapView.debugOptions = setOf(
+//                MapViewDebugOptions.TILE_BORDERS,
+//                MapViewDebugOptions.PARSE_STATUS,
+//                MapViewDebugOptions.TIMESTAMPS,
+//                MapViewDebugOptions.COLLISION,
+//                MapViewDebugOptions.STENCIL_CLIP,
+//                MapViewDebugOptions.DEPTH_BUFFER,
+//                MapViewDebugOptions.MODEL_BOUNDS,
+//                MapViewDebugOptions.TERRAIN_WIREFRAME,
+//            )
+            Log.d("地图的事件","onMapLoad: ${mapView}")
+// 比例尺变小
+// 禁用缩放手
         }
         // 1. 绘制连接所有点的折线
         if (markers.size >= 2) {
@@ -196,7 +250,7 @@ fun MapboxMapContent(
                 points = markers,
             ) {
                 lineColor = Color(0xffee4e8b)
-                lineWidth = 5.0
+                lineWidth = 3.0
             }
         }
 
@@ -557,8 +611,8 @@ fun AddMarker(
     onPointUpdated: (Point) -> Unit
 ) {
     val marker = rememberIconImage(
-        key = R.drawable.ic_blue_marker,
-        painter = painterResource(R.drawable.ic_blue_marker)
+        key = R.mipmap.ic_wp_map,
+        painter = painterResource(R.mipmap.ic_wp_map)
     )
 
     PointAnnotation(point = point) {
