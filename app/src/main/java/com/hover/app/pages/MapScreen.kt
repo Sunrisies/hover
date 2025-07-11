@@ -196,16 +196,13 @@ fun MapboxMapContent(
         },
         mapState = mapState,
         scaleBar = {
-            // 自定义比例尺：缩小文字和条的高度
             ScaleBar(
                 textSize = 10.sp,      // 调小文字（默认约14sp）
                 ratio = 0.05f ,   // 宽度设为可用空间一半
-                alignment = Alignment.BottomStart,
+                alignment = Alignment.BottomStart, // 设置位置
             )
         },
-        logo = {
-//            Logo()
-        },
+        logo = {},
         attribution = {},
         style = { MapStyle(style = Style.STANDARD_SATELLITE) },
 //        style = { MapStyle(style = "mapbox://styles/mapbox/satellite-streets-v11") },
@@ -240,9 +237,6 @@ fun MapboxMapContent(
 //                MapViewDebugOptions.MODEL_BOUNDS,
 //                MapViewDebugOptions.TERRAIN_WIREFRAME,
 //            )
-            Log.d("地图的事件","onMapLoad: ${mapView}")
-// 比例尺变小
-// 禁用缩放手
         }
         // 1. 绘制连接所有点的折线
         if (markers.size >= 2) {

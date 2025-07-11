@@ -20,7 +20,8 @@ class SplashActivity : ComponentActivity() {
             SplashScreen(onLoadingComplete = {
                 // 启动主界面
 //                startActivity(Intent(this, LoginActivity::class.java))
-                startActivity(Intent(this, MapActivity::class.java))
+//                startActivity(Intent(this, MapActivity::class.java))
+                startActivity(Intent(this, SelectShipActivity::class.java))
                 // 添加过渡动画
                 overridePendingTransition(R.anim.fade_in, R.anim.fade_out)
                 finish()

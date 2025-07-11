@@ -98,7 +98,7 @@ fun SplashScreen(
         ) {
             // Logo 图片 - 带缩放动画
             Image(
-                painter = painterResource(id = R.drawable.ic_launcher__1_),
+                painter = painterResource(id = R.drawable.ic_launcher__1),
                 contentDescription = "App Logo",
                 modifier = Modifier
                     .size(180.dp)
