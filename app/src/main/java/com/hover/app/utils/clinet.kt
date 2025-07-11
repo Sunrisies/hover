@@ -106,12 +106,24 @@ object SafeNetworkClient {
         client = null
     }
 }
+// 获取当前公钥
+@Serializable
+data class PublicKeyResponse(
+    val code: Int,
+    val msg: String,
+    val data: String,
+    var count: String ?= null,
+    var obj:String
+)
+
 
 // 认证服务
 object AuthService {
-    var BaseUrl = "http://api.chaoyang1024.top:18080/"
+    var BaseUrl = "http://101.200.223.8:8090/"
     // 使用模拟器专用地址
     private  val PERMISSIONS_URL = BaseUrl + "api/auth/permissions"
+    // 获取密钥
+    private  val KEY_URL = BaseUrl + "login/register/getPublicKey"
     private  val LOGIN_URL = BaseUrl + "api/auth/login"
     suspend fun getPermissions(): Result<BaseResponse<List<Permission>>> {
         println("正在请求权限数据...")
@@ -133,6 +145,15 @@ object AuthService {
                 contentType(ContentType.Application.Json)
                 accept(ContentType.Application.Json)
                 setBody(LoginRequest(username, password))
+            }.body()
+        }
+    }
+    suspend fun getKey(): Result<PublicKeyResponse> {
+        return SafeNetworkClient.safeRequest {
+            get(KEY_URL) {
+                timeout {
+                    requestTimeoutMillis = 15000
+                }
             }.body()
         }
     }

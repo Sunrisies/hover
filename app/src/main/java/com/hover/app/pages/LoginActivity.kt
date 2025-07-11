@@ -7,13 +7,16 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.blankj.utilcode.util.SPUtils
 import com.hover.app.utils.AuthService
+import com.hover.app.utils.PublicKeyResponse
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.Dispatchers
@@ -22,7 +25,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import java.io.IOException
 
+
+
 class LoginActivity : ComponentActivity() {
+    private val viewModel by lazy { LoginViewModel() }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -42,31 +48,38 @@ data class SavedUser(
     val password: String
 )
 
-// 用于跟踪当前活动的输入字段
-enum class Field {
-    USERNAME, PASSWORD
-}
-
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
     data class Success(val token: LoginData) : LoginState()
     data class Error(val exception: Throwable) : LoginState()
 }
+sealed class PublicKeyState{
+    object Loading : PublicKeyState()
+    data class Success(val publicKey: PublicKeyResponse) : PublicKeyState()
+    data class Error(val exception: Throwable) : PublicKeyState()
+}
 
 class LoginViewModel : ViewModel() {
     var username by mutableStateOf("")
     var password by mutableStateOf("")
 
-    //    var isLogin by mutableStateOf(false)
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Idle)
     val loginState: StateFlow<LoginState> = _loginState
+
+    private var _publicKeyState = MutableStateFlow<PublicKeyState>(PublicKeyState.Loading)
+    val publicKeyState: StateFlow<PublicKeyState> = _publicKeyState
 
     var savedUsersList by mutableStateOf(mutableListOf<SavedUser>())
 
     init {
         Log.d("LoginViewModel", "init")
         savedUsersList = loadSavedUsers().toMutableList()
+        viewModelScope.launch {
+            // 在协程作用域内调用挂起函数
+            val publicKey = getPublicKey()
+            Log.d("LoginActivity", "publicKey=$publicKey")
+        }
     }
 
     private fun loadSavedUsers(): List<SavedUser> {
@@ -84,8 +97,6 @@ class LoginViewModel : ViewModel() {
                 }
             }
     }
-
-    // 权限列表
 
     // 执行登录操作
     fun performLogin() {
@@ -136,8 +147,32 @@ class LoginViewModel : ViewModel() {
     }
 
     suspend fun login(username: String, password: String) {
-        _loginState.value = LoginState.Loading
+        // 确保公钥已获取
+        Log.d("-1--1-1-1-1-", "公钥未获取${publicKeyState.value}")
+        val publicKey = when (val state = publicKeyState.value) {
 
+            is PublicKeyState.Success -> {
+                Log.d("Login", "公钥: ${state.publicKey}")
+                state.publicKey
+            }
+            else -> {
+                Log.d("Login----", "公钥未获取")
+                // 如果公钥未获取，先获取公钥
+//                getPublicKey()
+                Log.d("Login----", "公钥212未获取")
+
+                // 等待公钥获取完成
+//                publicKeyState.filter { it is PublicKeyState.Success || it is PublicKeyState.Error }
+//                    .first()
+//                    .let {
+//                        if (it is PublicKeyState.Success) it.publicKey
+//                        else throw IllegalStateException("无法获取公钥")
+//                    }
+            }
+        }
+
+        _loginState.value = LoginState.Loading
+        Log.d("Login-----", "登录: $username, $password, $publicKey")
         try {
             val result = AuthService.login(username, password)
             result.fold(
@@ -152,6 +187,26 @@ class LoginViewModel : ViewModel() {
             )
         } catch (e: Exception) {
             _loginState.value = LoginState.Error(e)
+        }
+    }
+
+    // 获取公钥
+    suspend fun getPublicKey() {
+        _publicKeyState.value = PublicKeyState.Loading
+
+        try {
+            val result = AuthService.getKey()
+            result.fold(
+                onSuccess = { response ->
+                    _publicKeyState.value = PublicKeyState.Success(response)
+                    Log.d("Login", "公钥: $response")
+                },
+                onFailure = { error ->
+                    _publicKeyState.value = PublicKeyState.Error(error)
+                }
+            )
+        } catch (e: Exception) {
+            _publicKeyState.value = PublicKeyState.Error(e)
         }
     }
 }

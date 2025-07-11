@@ -75,14 +75,8 @@ import com.mapbox.maps.extension.compose.annotation.generated.PointAnnotation
 import com.mapbox.maps.extension.compose.annotation.generated.PolylineAnnotation
 import com.mapbox.maps.extension.compose.annotation.rememberIconImage
 import com.mapbox.maps.extension.compose.style.MapStyle
+import com.mapbox.maps.extension.style.layers.properties.generated.IconAnchor
 import com.mapbox.maps.plugin.annotation.generated.PointAnnotation
-
-//class MapScreen1:ComponentActivity{
-//    override fun onCreate(savedInstanceState: Bundle?) {
-//
-//    }
-//}
-
 
 @Composable
 fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
@@ -138,11 +132,6 @@ fun MapScreen(onLogout: () -> Unit, viewModel: MapViewModel = viewModel()) {
 }
 
 class MapViewModel : ViewModel() {
-    var shipSpeed by mutableStateOf("21121")
-    var password by mutableStateOf("")
-    // 地图对象
-
-
     // 控制抽屉状态的变量
     var isDrawerOpen by mutableStateOf(true)
 
@@ -571,6 +560,7 @@ fun AddMarker(
 
     PointAnnotation(point = point) {
         iconImage = marker
+        iconAnchor = IconAnchor.BOTTOM
         interactionsState.onDragged { event ->
             // 更新点位置
             val newPoint = Point.fromLngLat(event.point.longitude(), event.point.latitude())
