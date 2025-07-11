@@ -3,17 +3,17 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class LoginRequest(
-    @SerialName("user_name") val user_name: String,
-    @SerialName("pass_word") val pass_word: String
+    @SerialName("user_name") val userName: String,
+    @SerialName("pass_word") val passWord: String
 )
 
 
-@Serializable
-data class LoginData(
-    val access_token: String,
-    val expires_in: Number,
-    val user: UserInfo
-)
+//@Serializable
+//data class LoginData(
+//    val access_token: String,
+//    val expires_in: Number,
+//    val user: UserInfo
+//)
 
 @Serializable
 data class UserInfo(
@@ -29,3 +29,43 @@ data class UserInfo(
     @SerialName("created_at") val created_at: String,
     @SerialName("updated_at") val updated_at: String
 )
+
+// 定义数据模型类
+@Serializable
+data class LoginResponse(
+    val code: Int,
+    val msg: String,
+    val data: LoginData?,
+    val count: Any?,
+    val obj: Any?
+)
+@Serializable
+data class LoginData(
+    val userId: String,
+    val userName: String,
+    val permission: List<Any>,
+    val modules: List<Module>,
+    val token: String,
+    val workspaceId: String,
+    val userType: Int,
+    val mqttUsername: String,
+    val mqttPassword: String,
+    val nickName: String,
+    val logo: String
+)
+@Serializable
+data class Module(
+    val id: String,
+    val modulename: String,
+    val moduledesc: String,
+    val moduleico: String,
+    val routeurl: String,
+    val removecode: String,
+    val page: Any?,
+    val limit: Any?,
+    val keywords: Any?,
+    val createTime: Any?,
+    val permissionids: Any?
+)
+
+

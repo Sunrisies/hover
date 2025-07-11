@@ -2,6 +2,7 @@ package com.hover.app.utils
 
 import LoginData
 import LoginRequest
+import LoginResponse
 import android.util.Log
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -124,7 +125,7 @@ object AuthService {
     private  val PERMISSIONS_URL = BaseUrl + "api/auth/permissions"
     // 获取密钥
     private  val KEY_URL = BaseUrl + "login/register/getPublicKey"
-    private  val LOGIN_URL = BaseUrl + "api/auth/login"
+    private  val LOGIN_URL = BaseUrl + "login/register/login"
     suspend fun getPermissions(): Result<BaseResponse<List<Permission>>> {
         println("正在请求权限数据...")
         return SafeNetworkClient.safeRequest {
@@ -136,7 +137,7 @@ object AuthService {
         }
     }
     // 登录
-    suspend fun login(username: String, password: String): Result<BaseResponse<LoginData>> {
+    suspend fun login(username: String, password: String): Result<LoginResponse> {
         return SafeNetworkClient.safeRequest {
             post(LOGIN_URL) {
                 timeout {
@@ -159,4 +160,7 @@ object AuthService {
     }
 
 }
+//}.body<LoginResponse>().also { response ->
+//    Log.d("Network", "登录成功!${response}")
+//}
 

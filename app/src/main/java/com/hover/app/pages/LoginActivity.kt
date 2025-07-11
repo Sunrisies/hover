@@ -7,16 +7,16 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewModelScope
 import com.blankj.utilcode.util.SPUtils
+import com.blankj.utilcode.util.ToastUtils
 import com.hover.app.utils.AuthService
 import com.hover.app.utils.PublicKeyResponse
+import com.hover.app.utils.RsaUtils
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.ServerResponseException
 import kotlinx.coroutines.Dispatchers
@@ -26,12 +26,12 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 
 
-
 class LoginActivity : ComponentActivity() {
     private val viewModel by lazy { LoginViewModel() }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+
             LoginScreen(
                 onLoginSuccess = {
                     startActivity(Intent(this@LoginActivity, MapActivity::class.java))
@@ -51,10 +51,11 @@ data class SavedUser(
 sealed class LoginState {
     object Idle : LoginState()
     object Loading : LoginState()
-    data class Success(val token: LoginData) : LoginState()
+    data class Success(val token: LoginData?) : LoginState()
     data class Error(val exception: Throwable) : LoginState()
 }
-sealed class PublicKeyState{
+
+sealed class PublicKeyState {
     object Loading : PublicKeyState()
     data class Success(val publicKey: PublicKeyResponse) : PublicKeyState()
     data class Error(val exception: Throwable) : PublicKeyState()
@@ -77,8 +78,7 @@ class LoginViewModel : ViewModel() {
         savedUsersList = loadSavedUsers().toMutableList()
         viewModelScope.launch {
             // 在协程作用域内调用挂起函数
-            val publicKey = getPublicKey()
-            Log.d("LoginActivity", "publicKey=$publicKey")
+            getPublicKey()
         }
     }
 
@@ -148,38 +148,36 @@ class LoginViewModel : ViewModel() {
 
     suspend fun login(username: String, password: String) {
         // 确保公钥已获取
-        Log.d("-1--1-1-1-1-", "公钥未获取${publicKeyState.value}")
         val publicKey = when (val state = publicKeyState.value) {
-
             is PublicKeyState.Success -> {
                 Log.d("Login", "公钥: ${state.publicKey}")
-                state.publicKey
+                state.publicKey.data
             }
+
             else -> {
-                Log.d("Login----", "公钥未获取")
-                // 如果公钥未获取，先获取公钥
-//                getPublicKey()
-                Log.d("Login----", "公钥212未获取")
-
-                // 等待公钥获取完成
-//                publicKeyState.filter { it is PublicKeyState.Success || it is PublicKeyState.Error }
-//                    .first()
-//                    .let {
-//                        if (it is PublicKeyState.Success) it.publicKey
-//                        else throw IllegalStateException("无法获取公钥")
-//                    }
+                ""
             }
-        }
 
+        }
+//  进行加密
+        val publicKey1 = publicKey.replace("\n", "")
+        var encryptedPassword = RsaUtils.encrypt(password, publicKey1)
         _loginState.value = LoginState.Loading
-        Log.d("Login-----", "登录: $username, $password, $publicKey")
         try {
-            val result = AuthService.login(username, password)
+            val result = AuthService.login(username, encryptedPassword)
             result.fold(
                 onSuccess = { response ->
                     val token = response.data
+                    Log.d("login", "登录成功: ${response},$response")
+                    if (response.data == null) {
+                        _loginState.value = LoginState.Error(exception = Exception("登录失败"))
+                        // 登录失败进行吐司提示
+                        ToastUtils.showLong("登录失败")
+                    } else {
+                        _loginState.value = LoginState.Success(token)
+                        ToastUtils.showLong("登录成功")
+                    }
                     // 保存token等操作
-                    _loginState.value = LoginState.Success(token)
                 },
                 onFailure = { error ->
                     _loginState.value = LoginState.Error(error)
