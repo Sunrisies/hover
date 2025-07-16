@@ -47,7 +47,7 @@ android {
     }
     splits {
         abi {
-            isEnable  = true
+            isEnable = true
             reset()
             include("x86", "x86_64", "armeabi-v7a", "arm64-v8a")
             isUniversalApk = false
@@ -101,6 +101,10 @@ dependencies {
 
     // 工具库
     implementation("com.blankj:utilcodex:1.31.1")
+    // 极致体验的Compose刷新组件 (*必须)
+    implementation("com.github.jenly1314.UltraSwipeRefresh:refresh:1.3.1")
+// 经典样式的指示器 (可选)
+    implementation("com.github.jenly1314.UltraSwipeRefresh:refresh-indicator-classic:1.3.1")
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
