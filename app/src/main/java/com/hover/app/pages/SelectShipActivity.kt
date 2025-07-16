@@ -1,6 +1,8 @@
 package com.hover.app.pages
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -30,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -105,7 +108,7 @@ fun SelectShipScreen() {
 
 @Composable
 fun UltraSwipeRefreshSample(list: List<String>) {
-
+    val context = LocalContext.current
     val state = rememberUltraSwipeRefreshState()
     var itemCount by remember { mutableIntStateOf(20) }
     val coroutineScope = rememberCoroutineScope()
@@ -143,7 +146,18 @@ fun UltraSwipeRefreshSample(list: List<String>) {
         LazyColumn(Modifier.background(color = Color.White)) {
 
             items(list) { item ->
-                SelectShipItem(item, isSelected = true, onSelect = {})
+                SelectShipItem(item, isSelected = true, onSelect = {
+                    // 进行跳转,同时把参数也带过去
+                    val intent = Intent(context, MapActivity::class.java).apply {
+                        // 把参数放进去
+                        putExtra("SHIP_NAME", item)
+                        // 如果还有其他参数
+                        // putExtra("EXTRA_ID", 123)
+                    }
+                    context.startActivity(intent)
+
+                    Log.d("SelectShipActivity", "点击了${item}")
+                })
             }
         }
     }
@@ -173,7 +187,6 @@ fun SelectShipItem(name: String, isSelected: Boolean, onSelect: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp, 8.dp)
-                .clickable(onClick = onSelect)
         ) {
             Text(text = name, fontSize = 24.sp)
             // 间隔

@@ -3,6 +3,7 @@ package com.hover.app.pages
 import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.ui.platform.LocalView
@@ -21,7 +22,8 @@ class MapActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
+        val shipName = intent.getStringExtra("SHIP_NAME") ?: "未知船名"
+        Log.d("MapActivity", "shipName: $shipName")
         // 创建AuthManager实例
         val authManager = AuthManager(applicationContext)
 
